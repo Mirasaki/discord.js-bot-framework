@@ -1,20 +1,8 @@
-const yesReplies = [
-  'yes', 'yah', 'yep', 'ya', 'yeah', 'true', 'enable', 'enabled'
-];
-const noReplies = [
-  'no', 'nah', 'false', 'disable', 'disabled'
-];
 const MS_IN_A_DAY = 1000 * 60 * 60 * 24;
 module.exports = (client) => {
 
     client.extras = require('./assets/extras.json');
     client.ids = require('./assets/ids.json');
-
-    client.yesNoReplies = text => {
-        if (yesReplies.find(v => v === text)) return true;
-        if (noReplies.find(v => v === text)) return false;
-        else return undefined;
-    };
 
     client.getInput = (message, guildSettings) => {
         let input = message.content.slice(guildSettings.prefix.length).trim().split(' ');

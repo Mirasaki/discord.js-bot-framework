@@ -86,3 +86,11 @@ module.exports.getArgs = (command, embed) => {
     if (!embed.fields.length) embed.setDescription(`The command **\`${command.help.name}\`** doesn't have any required or optional [options / arguments](https://pastebin.com/DytkkJ0x)`);
 
 };
+const yesReplies = [ 'yes', 'yah', 'yep', 'ya', 'yeah', 'true', 'enable', 'enabled', '1' ];
+const noReplies = [ 'no', 'nah', 'false', 'disable', 'disabled', '0' ];
+module.exports.getCoreBoolean = (text) => {
+    if (typeof text != 'string') return undefined;
+    else if (yesReplies.find(v => v === text)) return true;
+    else if (noReplies.find(v => v === text)) return false;
+    else return undefined;
+};

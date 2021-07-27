@@ -1,4 +1,5 @@
 const Discord = require('discord.js');
+const { getCoreBoolean } = require('../../handlers/arguments');
 const { deleteFromCache, getSettings } = require('../../mongo/helpers/settings');
 exports.run = async ({ client, message, args, guildSettings }) => {
 
@@ -57,11 +58,11 @@ exports.run = async ({ client, message, args, guildSettings }) => {
                 break;
 
                 case 5:
-                    if (client.yesNoReplies(value) === undefined) return client.send('no', message, 'available values are `true/false`, `enabled/disabled` & `yes/no`!');
+                    if (getCoreBoolean(value) === undefined) return client.send('no', message, 'available values are `true/false`, `enabled/disabled` & `yes/no`!');
                     keyToEdit = 'Permission Notice';
-                    if (settings.permissions.permission_notice === `${client.yesNoReplies(value)}`) return client.send('no', message, `\`${keyToEdit}\` is already set to \`${client.yesNoReplies(value)}\`!`);
-                    settings.permissions.permission_notice = `${client.yesNoReplies(value)}`;
-                    value = `${client.yesNoReplies(value)}`;
+                    if (settings.permissions.permission_notice === `${getCoreBoolean(value)}`) return client.send('no', message, `\`${keyToEdit}\` is already set to \`${getCoreBoolean(value)}\`!`);
+                    settings.permissions.permission_notice = `${getCoreBoolean(value)}`;
+                    value = `${getCoreBoolean(value)}`;
                 break;
 
                 case 6:
@@ -75,7 +76,7 @@ exports.run = async ({ client, message, args, guildSettings }) => {
 
                 case 7:
                     keyToEdit = 'Restrict Cmds Channel';
-                    if (client.yesNoReplies(value) === false) {
+                    if (getCoreBoolean(value) === false) {
                         if (settings.channels.restrict_cmds_channel === 'false') return client.send('no', message, `\`${keyToEdit}\` is already set to \`#${channel.name}\`!`);
                         settings.channels.restrict_cmds_channel = 'false';
                         value = 'false';
@@ -107,10 +108,10 @@ exports.run = async ({ client, message, args, guildSettings }) => {
     } else if (action === 'reset') {
 
         await client.send('wait', message, 'are you sure you want to reset your settings?');
-        const filter = m => m.author.id === message.author.id && client.yesNoReplies(m.content.toLowerCase()) != null;
+        const filter = m => m.author.id === message.author.id && getCoreBoolean(m.content.toLowerCase()) != null;
         await message.channel.awaitMessages(filter, { max: 1, time: 15000, errors: ['time'] })
         .then(async collected => {
-            if (client.yesNoReplies(collected.first().content.toLowerCase()) === true) {
+            if (getCoreBoolean(collected.first().content.toLowerCase()) === true) {
                 const settings = await getSettings(message.guild.id);
                 try {
                     await settings.delete();
