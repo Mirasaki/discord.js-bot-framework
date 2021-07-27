@@ -1,27 +1,16 @@
-// const { updateSettingsDatabase } = require('../../database/helpers/settings');
-
 exports.run = async ({ client, message }) => {
-  client.send('yes', message, 'success!')
-  client.send('wait', message, 'working!')
-  client.send('no', message, 'failed!')
-  client.send('test', message, 'error!')
-
-  // updateSettingsDatabase();
+  return message.channel.send({
+    content: 'Yep!'
+  })
 }
 
 exports.config = {
   enabled: true,
   required: false,
-  aliases: [],
-  permLevel: 'Developer',
-  cooldown: 23,
-  clientPermissions: [],
-  userPermissions: []
+  permLevel: 'Developer'
 }
 
 exports.help = {
-  name: 'yep',
-  category: 'YEP',
   shortDescription: 'Test functionality with this command.',
   longDescription: 'Test functionality with this command. For the testing of smaller things and bits of code, consider using the eval command.',
   usage: '<command>',

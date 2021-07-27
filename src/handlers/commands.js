@@ -24,8 +24,10 @@ module.exports.loadSlashCommands = async (client) => {
   const globalCommands = await commands.fetch()
   const testServer = client.guilds.cache.get(process.env.SLASH_CMD_TEST_SERVER_ID)
 
+  // Delete all your slash commands by calling:
   // commands.set([])
   // testServer.commands.set([])
+
   for await (const path of commandPaths) {
     const cmd = require(path)
     const { slash } = cmd
@@ -49,7 +51,6 @@ module.exports.loadSlashCommands = async (client) => {
       ))
     }
 
-    // return console.log(globalCommands)
     const globalCommand = globalCommands.find((e) => e.name === cmd.help.name && e.guildId === null)
 
     if (slash.enabled === false) {
@@ -114,19 +115,33 @@ module.exports.loadSlashCommands = async (client) => {
 const tempCommands = []
 const validateCommand = (client, cmd, path) => {
   let problems = []
-  const pathReverseSlash = path.replace(/\\/g, '/')
-  const shortPath = pathReverseSlash.slice(pathReverseSlash.indexOf(process.env.COMMANDS_PATH), path.length)
+  path = path.replace(/\\/g, '/')
+  const shortPath = path.slice(
+    path.indexOf(process.env.COMMANDS_PATH), path.length
+  )
   if (!cmd.help || !cmd.config || !cmd.run) {
     throw new Error(`Missing ${
-        cmd.help
-        ? (
-          cmd.config
-          ? 'exports.run'
-          : 'exports.config'
-        )
-        : 'exports.help'
-      }\n    at ${shortPath}`)
+      cmd.help
+      ? (
+        cmd.config
+        ? 'exports.run'
+        : 'exports.config'
+      )
+      : 'exports.help'
+    }\n    at ${shortPath}`)
   }
+
+  const splitPath = path.split('/')
+  const commandNameFromFile = splitPath[splitPath.length - 1].slice(0, -3)
+  const commandCategoryFromFile = splitPath[splitPath.length - 2]
+
+  if (!cmd.help.name) cmd.help.name = commandNameFromFile
+  if (!cmd.help.category) cmd.help.category = cmd.help.category === 'commands' ? 'Uncategorized' : commandCategoryFromFile
+  if (!cmd.config.aliases) cmd.config.aliases = []
+  if (!cmd.config.cooldown) cmd.config.cooldown = -1
+  if (!cmd.config.clientPermissions) cmd.config.clientPermissions = []
+  if (!cmd.config.userPermissions) cmd.config.userPermissions = []
+
   const thisObj = { name: cmd.help.name, origin: path }
   const check = tempCommands.find((e) => e.name === cmd.help.name)
   if (check) throw new Error(`Duplicate Command: ${cmd.help.name} already registered!\nOriginal command: ${check.origin}\nRequested event: ${path}`)
@@ -153,21 +168,21 @@ const validateCommand = (client, cmd, path) => {
   if (Array.isArray(helpExports)) problems = problems.concat(helpExports)
   if (Array.isArray(confExports)) problems = problems.concat(confExports)
 
+  if (cmd.slash) {
+    const slashExports = validateExports(slashTypes, cmd.slash)
+    if (Array.isArray(slashExports)) problems = problems.concat(slashExports)
+  }
+
   const stopIfInvalid = () => {
     if (problems[0]) {
       problems.push(`    at ${path}`)
-      throw new Error(`CommandValidationError:\n${problems.join('\n')}`)
+      throw new Error(`CommandExportsValidationError:\n${problems.join('\n')}`)
     }
   }
 
   // Stop Initializing if not all the required properties/exports are present
   stopIfInvalid()
   // Additional check on those present properties afterwards
-
-  if (
-    path.slice(path.replace(/\\/g, '/').lastIndexOf('/') + 1, path.length - 3)
-    !== cmd.help.name
-  ) throw new Error(`CommandValidationError:\nInvalid command name, exports.help.name is expected to match the path name without [.js] extension!\n    at ${path}`)
 
   if (permLevels[cmd.config.permLevel] === undefined) problems.push(`Unsupported permission level: ${cmd.config.permLevel}`)
 
@@ -182,18 +197,22 @@ const validateCommand = (client, cmd, path) => {
   })
 
   stopIfInvalid()
+  counter = 0
   return logStr
 }
 
+let counter = 0
 const validateExports = (originalObj, targetObj) => {
+  const exports = 'exports.' + (counter === 0 ? 'help' : (counter === 1 ? 'config' : 'slash'))
   const problems = []
   Object.entries(originalObj).forEach(([key, value]) => {
     // We turn the eslint warning off because we only touch Objects with hardcoded keys
     // eslint-disable-next-line no-prototype-builtins
-    if (!targetObj.hasOwnProperty(key)) problems.push(`Missing property <${key}: type ${typeof value}> in command exports`)
-    else if (value === 'array' && Array.isArray(targetObj[key]) === false) problems.push(`Wrong type <${key}: expected array received ${typeof targetObj[key]}>`)
-    else if (value !== 'array' && typeof targetObj[key] !== typeof value) problems.push(`Wrong type <${key}: expected ${typeof value} received ${typeof targetObj[key]}>`)
+    if (!targetObj.hasOwnProperty(key)) problems.push(`Missing ${exports} property <${key}> (type ${typeof value})`)
+    else if (value === 'array' && Array.isArray(targetObj[key]) === false) problems.push(`Wrong ${exports} type ${key}: expected array, received ${typeof targetObj[key]}`)
+    else if (value !== 'array' && typeof targetObj[key] !== typeof value) problems.push(`Wrong ${exports} type ${key}: expected ${typeof value} received ${typeof targetObj[key]}>`)
   })
+  counter++
   if (problems[0]) return problems
   else return true
 }
@@ -215,4 +234,12 @@ const configTypes = {
   cooldown: 0,
   clientPermissions: 'array',
   userPermissions: 'array'
+}
+
+const slashTypes = {
+  enabled: true,
+  reload: true,
+  globalCommand: true,
+  testCommand: true,
+  serverIds: 'array'
 }

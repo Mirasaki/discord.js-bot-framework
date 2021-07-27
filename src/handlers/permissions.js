@@ -1,6 +1,7 @@
 // https://discord.com/developers/docs/topics/permissions
 
 const permConfig = require('../../config/permissionLevels')
+const { log } = require('./logger')
 const permLevels = {}
 for (let i = 0; i < permConfig.length; i++) {
   const thisLevel = permConfig[i]
@@ -103,6 +104,7 @@ module.exports.checkAndExecuteIfPass = (client, message, cmd) => {
     return channel.send({ embeds: [embed] })
   } else {
     cmd.run({ client, message })
+    log(`${member.user.tag} (${permissionName}) ran command ${cmd.help.name}`, 'cmd')
     if (
       permissionLevel < permConfig.sort((a, b) => a.level > b.level ? -1 : 1)[0].level
       && commandCooldown > 0
