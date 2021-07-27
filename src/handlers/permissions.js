@@ -1,216 +1,173 @@
 // https://discord.com/developers/docs/topics/permissions
 
-const { getSettings } = require('../mongo/helpers/settings');
-const levelCache = {};
+const permConfig = require('../../config/permissionLevels')
+const permLevels = {}
+for (let i = 0; i < permConfig.length; i++) {
+  const thisLevel = permConfig[i]
+  permLevels[thisLevel.name] = thisLevel.level
+}
+module.exports.permLevels = permLevels
 
-module.exports.specialPermissions = {
-    support: [],
-    admins: [],
-    developers: ['290182686365188096']
-};
-
-module.exports.getLevelCache = () => {
-    checkLevelCache();
-    return levelCache;
-};
-
-module.exports.getPermissionLevel = async (message) => {
-
-    let permLevel = {
-        permissionLevel: 0,
-        permissionName: 'User'
-    };
-
-    const permOrder = permissionLevels.slice(0).sort((a, b) => a.level < b.level ? 1 : -1);
-
-    while (permOrder.length) {
-        const currentLevel = permOrder.shift();
-        if (await currentLevel.hasLevel(message)) {
-            permLevel = {
-                permissionLevel: currentLevel.level,
-                permissionName: currentLevel.name
-            };
-            break;
-        }
+module.exports.getPermissionLevel = (member, channel) => {
+  const correctOrder = permConfig.sort((a, b) => a.level > b.level ? -1 : 1)
+  for (const currentLevel of correctOrder) {
+    if (currentLevel.hasLevel(member, channel)) {
+      return {
+        permissionLevel: currentLevel.level,
+        permissionName: currentLevel.name
+      }
     }
+  }
+}
 
-    return permLevel;
+let cmdCooldown = []
+module.exports.checkAndExecuteIfPass = (client, message, cmd) => {
+  const { member, channel } = message
+  const clientId = client.user.id
+  const userId = member.user.id
+  const userPermLevel = this.getPermissionLevel(member, channel)
+  const commandCooldown = cmd.config.cooldown * 1000
+  const cdString = `${userId}-${cmd.help.name}-${Date.now() + commandCooldown}`
+  const { permissionName, permissionLevel } = userPermLevel
+  const embed = {
+    color: 'RED',
+    title: `There was a problem while using "${cmd.help.name}"`,
+    fields: []
+  }
 
-};
+  // Check for required command permission level
+  if (
+    permLevels[cmd.config.permLevel]
+    > permissionLevel
+  ) {
+    embed.description = `${member}, you don't have the required permission level to use this command.
+    \nRequired permission level: __${permLevels[cmd.config.permLevel]}__ - **${
+      cmd.config.permLevel
+    }**\nYour permission level: __${permissionLevel}__ - **${
+      permissionName
+    }**`
+    return channel.send({ embeds: [embed] })
+  }
 
-module.exports.checkPermissionLevel = async (message, cmd) => {
-    checkLevelCache();
-    const { permissionLevel, permissionName } = await this.getPermissionLevel(message);
-    const permLevel = {
-        permissionLevel,
-        permissionName,
-        willPass: permissionLevel < levelCache[cmd.config.permLevel] ? false : true
-    };
-    return permLevel;
-};
+  // Checking for required client permissions
+  const clientPerms = { required: cmd.config.clientPermissions, missing: [] }
+  if (
+    clientPerms.required.length >= 1
+    && !this.hasChannelPerm(client.user.id, channel, 'ADMINISTRATOR')
+  ) for (const perm of clientPerms.required) if (!this.hasChannelPerm(clientId, channel, perm)) clientPerms.missing.push(perm)
 
-module.exports.checkDiscordPermissions = (client, message, cmd) => {
+  // Checking for (optional) additional required user permissions
+  const userPerms = { required: cmd.config.userPermissions, missing: [] }
+  if (
+    userPerms.required.length >= 1
+    && !this.hasChannelPerm(client.user.id, channel, 'ADMINISTRATOR')
+  ) for (const perm of userPerms.required) if (!this.hasChannelPerm(userId, channel, perm)) userPerms.missing.push(perm)
 
-    let permissions = cmd.config.clientPermissions;
-    if (permissions.length && typeof permissions === 'string') permissions = [permissions];
-
-    let userPermissions = cmd.config.userPermissions;
-    if (userPermissions.length && typeof permissions === 'string') userPermissions = [userPermissions];
-
-    let botPermsAreValid = true;
-    let userPermsAreValid = true;
-
-    if (!message.guild.me.hasPermission('ADMINISTRATOR')) {
-        if (!message.channel.permissionsFor(client.user.id)) {
-            botPermsAreValid = permissions;
-        } else {
-            const missingBotPermissions = permissions.filter(perm => !message.channel.permissionsFor(client.user.id).has(perm));
-            if (missingBotPermissions.length >= 1) botPermsAreValid = missingBotPermissions;
-        }
+  // Check if the user is on cooldown
+  if (commandCooldown > 0) {
+    const userString = cmdCooldown.find(string => string.startsWith(`${userId}-${cmd.help.name}`))
+    if (userString) {
+      const cdExpires = userString.slice(userString.length - 13, userString.length)
+      return channel.send(`${member.toString()}, you can use \`${cmd.help.name}\` again in ${
+        Math.round((cdExpires - Date.now()) / 1000) === 1
+        ? '1 second!'
+        : `${Math.round((cdExpires - Date.now()) / 1000)} seconds!`
+      }`)
     }
+  }
 
-    if (!message.member.hasPermission('ADMINISTRATOR')) {
-        if (!message.channel.permissionsFor(message.author.id)) {
-            userPermsAreValid = userPermissions;
-        } else {
-            const missingUserPermissions = userPermissions.filter(perm => !message.channel.permissionsFor(message.author.id).has(perm));
-            if (missingUserPermissions.length >= 1) userPermsAreValid = missingUserPermissions;
-        }
+  // Handle Args
+  // End Handle Args
+
+  // Custom reply() function at client.reply('type = cmd/slash', message)
+
+  const valid = userPerms.missing.length < 1 && clientPerms.missing.length < 1
+
+  if (!valid) {
+    if (clientPerms.missing.length >= 1) {
+      const { missing } = clientPerms
+      embed.fields.push({
+        name: `I lack the required permission${missing.length === 1 ? '' : 's'}:`,
+        value: `${getNormalPermissionNames(missing)}`,
+        inline: true
+      })
     }
-
-    return {
-        missingBotPermissions: botPermsAreValid,
-        missingUserPermissions: userPermsAreValid,
-        willPass: typeof botPermsAreValid === 'boolean' && typeof userPermsAreValid === 'boolean' ? true : false
-    };
-
-};
-
-module.exports.validatePermissions = (permissions, name) => {
-    for (const permission of permissions) {
-        if (!validPermissions.includes(permission)) {
-            throw new Error(`Unknown permission node "${permission}" called in ${name}.js`);
-        }
+    if (userPerms.missing.length >= 1) {
+      const { missing } = userPerms
+      embed.fields.push({
+        name: `You lack the required permission${missing.length === 1 ? '' : 's'}:`,
+        value: `${getNormalPermissionNames(missing)}`,
+        inline: true
+      })
     }
-};
-
-const checkLevelCache = () => {
-    if (!levelCache.size) {
-        for (let i = 0; i < permissionLevels.length; i++) {
-            const thisLevel = permissionLevels[i];
-            levelCache[thisLevel.name] = thisLevel.level;
-        }
+    return channel.send({ embeds: [embed] })
+  } else {
+    cmd.run({ client, message })
+    if (
+      permissionLevel < permConfig.sort((a, b) => a.level > b.level ? -1 : 1)[0].level
+      && commandCooldown > 0
+    ) {
+      cmdCooldown.push(cdString)
+      setTimeout(() => {
+        cmdCooldown = cmdCooldown.filter((string) => { return string !== cdString })
+      }, commandCooldown)
     }
-};
+  }
+}
 
-const permissionLevels = [
+// Defined client & user permissions are validated
+// when loading/registering the command
+module.exports.validatePermissions = (permissions) => {
+  const invalidPerms = []
+  for (const permission of permissions) if (!validPermissions.includes(permission)) invalidPerms.push(permission)
+  return invalidPerms
+}
 
-    {
-        level: 0,
-        name: 'User',
-        hasLevel: () => true
-    },
-
-    {
-        level: 1,
-        name: 'Helper',
-        hasLevel: async (message) => {
-            const guildSettings = await getSettings(message.guild.id);
-            const helperRole = message.guild.roles.cache.get(guildSettings.permissions.helper_role);
-            if (helperRole && message.member.roles.cache.has(helperRole.id)) return true;
-            return false;
-        }
-    },
-
-    {
-        level: 2,
-        name: 'Moderator',
-        hasLevel: async (message) => {
-            const guildSettings = await getSettings(message.guild.id);
-            const modRole = message.guild.roles.cache.get(guildSettings.permissions.mod_role);
-            if (modRole && message.member.roles.cache.has(modRole.id)) return true;
-            return false;
-        }
-    },
-
-    {
-        level: 3,
-        name: 'Administrator',
-        hasLevel: async (message) => {
-            if (message.member.hasPermission('ADMINISTRATOR')) return true;
-            const guildSettings = await getSettings(message.guild.id);
-            const adminRole = message.guild.roles.cache.get(guildSettings.permissions.admin_role);
-            if (adminRole && message.member.roles.cache.has(adminRole.id)) return true;
-            return false;
-        }
-    },
-
-    {
-        level: 4,
-        name: 'Server Owner',
-        hasLevel: (message) => {
-            if (!message.guild || !message.guild.owner || !message.guild.ownerID) return false;
-            if (message.author.id == message.guild.ownerID) return true;
-            return false;
-        }
-    },
-
-    {
-        level: 5,
-        name: 'Bot Support',
-        hasLevel: (message) => this.specialPermissions.support.includes(message.author.id)
-    },
-
-    {
-        level: 6,
-        name: 'Bot Administrator',
-        hasLevel: (message) => this.specialPermissions.admins.includes(message.author.id)
-    },
-
-    {
-        level: 7,
-        name: 'Developer',
-        hasLevel: (message) => this.specialPermissions.developers.includes(message.author.id)
-    },
-
-    {
-        level: 8,
-        name: 'Bot Owner',
-        hasLevel: (message) => message.author.id == process.env.OWNER_ID
-    }
-
-];
+module.exports.hasChannelPerm = (userId, channel, perm) => channel.permissionsFor(userId) && channel.permissionsFor(userId).has(perm)
 
 const validPermissions = [
-    'ADMINISTRATOR',
-    'CREATE_INSTANT_INVITE',
-    'KICK_MEMBERS',
-    'BAN_MEMBERS',
-    'MANAGE_CHANNELS',
-    'MANAGE_GUILD',
-    'ADD_REACTIONS',
-    'VIEW_AUDIT_LOG',
-    'PRIORITY_SPEAKER',
-    'STREAM',
-    'VIEW_CHANNEL',
-    'SEND_MESSAGES',
-    'SEND_TTS_MESSAGES',
-    'MANAGE_MESSAGES',
-    'EMBED_LINKS',
-    'ATTACH_FILES',
-    'READ_MESSAGE_HISTORY',
-    'MENTION_EVERYONE',
-    'USE_EXTERNAL_EMOJIS',
-    'VIEW_GUILD_INSIGHTS',
-    'CONNECT',
-    'SPEAK',
-    'MUTE_MEMBERS',
-    'DEAFEN_MEMBERS',
-    'MOVE_MEMBERS',
-    'USE_VAD',
-    'CHANGE_NICKNAME',
-    'MANAGE_NICKNAMES',
-    'MANAGE_ROLES',
-    'MANAGE_WEBHOOKS',
-    'MANAGE_EMOJIS'
-];
+  'ADMINISTRATOR',
+  'CREATE_INSTANT_INVITE',
+  'KICK_MEMBERS',
+  'BAN_MEMBERS',
+  'MANAGE_CHANNELS',
+  'MANAGE_GUILD',
+  'ADD_REACTIONS',
+  'VIEW_AUDIT_LOG',
+  'PRIORITY_SPEAKER',
+  'STREAM',
+  'VIEW_CHANNEL',
+  'SEND_MESSAGES',
+  'SEND_TTS_MESSAGES',
+  'MANAGE_MESSAGES',
+  'EMBED_LINKS',
+  'ATTACH_FILES',
+  'READ_MESSAGE_HISTORY',
+  'MENTION_EVERYONE',
+  'USE_EXTERNAL_EMOJIS',
+  'VIEW_GUILD_INSIGHTS',
+  'CONNECT',
+  'SPEAK',
+  'MUTE_MEMBERS',
+  'DEAFEN_MEMBERS',
+  'MOVE_MEMBERS',
+  'USE_VAD',
+  'CHANGE_NICKNAME',
+  'MANAGE_NICKNAMES',
+  'MANAGE_ROLES',
+  'MANAGE_WEBHOOKS',
+  'MANAGE_EMOJIS',
+  'USE_APPLICATION_COMMANDS',
+  'REQUEST_TO_SPEAK',
+  'MANAGE_THREADS',
+  'USE_PUBLIC_THREADS',
+  'USE_PRIVATE_THREADS'
+]
+
+const getNormalPermissionNames = (arr) => {
+  return arr.map((perm) => {
+    perm = perm.toLowerCase().split(/[ _]+/)
+    for (let i = 0; i < perm.length; i++) perm[i] = perm[i].charAt(0).toUpperCase() + perm[i].slice(1)
+    return perm.join(' ')
+  }).join('\n')
+}
