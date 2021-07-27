@@ -13,7 +13,6 @@ require('dotenv').config();
 console.log('\nBegin Initialization!\n');
 loadCommands(client);
 loadListeners(client);
-client.login(process.env.TEST_BOT_TOKEN);
 
 /*
     Created in
