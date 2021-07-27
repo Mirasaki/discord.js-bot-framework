@@ -65,7 +65,8 @@ exports.args = {
             flexible: true
         }
     ],
-    optional: []
+    optional: [],
+    flags: []
 };
 
 const getEmbed = (client, message, settings) => {

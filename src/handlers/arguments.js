@@ -7,21 +7,32 @@ module.exports.checkHasRequiredArgs = (prefix, message, cmd, args) => {
     const inputErrorEmbed = new MessageEmbed()
     .setColor('RED');
 
-    for(const arg of cmd.args.required) {
-        if (!args[arg.index]) {
-            inputErrorEmbed.addField(`**__Missing argument__** #${arg.index + 1} - ${arg.name.toProperCase()}`, `**Options:** \`${arg.options.join('`, `')}\``, true);
-        } else if (!arg.flexible && !arg.options.includes(args[arg.index])) {
-            inputErrorEmbed.setColor('ORANGE');
-            inputErrorEmbed.addField(`**__Invalid argument__** #${arg.index + 1} - ${arg.name.toProperCase()}`, `**Options:** \`${arg.options.join('`, `')}\``, true);
+    if (cmd.args) {
+
+        if (cmd.args.required) {
+            for(const arg of cmd.args.required) {
+                if (!args[arg.index]) {
+                    inputErrorEmbed.addField(`**__Missing REQUIRED argument__** #${arg.index + 1} - ${arg.name.toProperCase()}`, `**Options:** \`${arg.options.join('`, `')}\``, true);
+                } else if (!arg.flexible && !arg.options.includes(args[arg.index])) {
+                    inputErrorEmbed.setColor('ORANGE');
+                    inputErrorEmbed.addField(`**__Invalid REQUIRED argument__** #${arg.index + 1} - ${arg.name.toProperCase()}`, `**Options:** \`${arg.options.join('`, `')}\``, true);
+                }
+            }
         }
+
+        if (cmd.args.optional) {
+            for(const arg of cmd.args.optional.filter(a => a.flexible == false)) {
+                if (args[arg.index] && !arg.options.includes(args[arg.index])) {
+                    inputErrorEmbed.addField(`**__Invalid OPTIONAL argument__** #${arg.index + 1} - ${arg.name.toProperCase()}`, `**Options:** \`${arg.options.join('`, `')}\``, true);
+                }
+            }
+        }
+
     }
 
     if (inputErrorEmbed.fields && inputErrorEmbed.fields.length >= 1) {
-
         inputErrorEmbed.setDescription(`**${message.author.toString()}, there ${inputErrorEmbed.fields.length == 1 ? 'is a problem' : 'are some problems'} with your provided [arguments / options](https://pastebin.com/DytkkJ0x)!**\n\nType **\`${prefix}help ${cmd.help.name}\`** for more information!`);
-
         if (cmd.help.examples[0]) inputErrorEmbed.addField('Correct usage example:', `**\`\`\`${prefix}${cmd.help.examples[0]}\`\`\`**`, false);
-
         message.channel.send(inputErrorEmbed);
         return false;
     }
@@ -50,7 +61,8 @@ module.exports.getArgs = (command, embed) => {
         }
 
         if (thisArg == undefined) {
-            return hasNextArg = false;
+            hasNextArg = false;
+            break;
         }
 
         const { index, name, options } = thisArg;
@@ -61,6 +73,24 @@ module.exports.getArgs = (command, embed) => {
 
     } while (hasNextArg);
 
+    if (command.args && command.args.flags && command.args.flags.length >= 1) {
+        if (embed.fields.length) embed.addField('\u200b', '\u200b', false);
+        embed.addField('Command Flags', `${
+            command.args.flags
+            .filter() // Handle permlevel O:
+            .map(f => `\`${f.flag}\` **=>** ${f.result}`)
+            .join('\n')
+        }`, true);
+    }
+
     if (!embed.fields.length) embed.setDescription(`The command **\`${command.help.name}\`** doesn't have any required or optional [options / arguments](https://pastebin.com/DytkkJ0x)`);
 
+};
+const yesReplies = [ 'yes', 'yah', 'yep', 'ya', 'yeah', 'true', 'enable', 'enabled', '1' ];
+const noReplies = [ 'no', 'nah', 'false', 'disable', 'disabled', '0' ];
+module.exports.getCoreBoolean = (text) => {
+    if (typeof text != 'string') return undefined;
+    else if (yesReplies.find(v => v === text)) return true;
+    else if (noReplies.find(v => v === text)) return false;
+    else return undefined;
 };

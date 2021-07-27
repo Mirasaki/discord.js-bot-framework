@@ -49,5 +49,6 @@ exports.help = {
 
 exports.args = {
     required: [],
-    optional: []
+    optional: [],
+    flags: []
 };

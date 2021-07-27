@@ -155,5 +155,6 @@ exports.args = {
             flexible: false
         }
     ],
-    optional: []
+    optional: [],
+    flags: []
 };

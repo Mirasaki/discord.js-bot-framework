@@ -26,5 +26,13 @@ exports.help = {
 
 exports.args = {
     required: [],
-    optional: []
+    optional: [],
+    flags: [
+        {
+            flag: 'test',
+            result: 'Calling this command flag will **do this**',
+            permLevel: 'Developer',
+            permissions: ['MANAGE_GUILD']
+        }
+    ]
 };

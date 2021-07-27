@@ -138,13 +138,16 @@ exports.args = {
                 'Any of the commands',
                 'Any category of commands',
                 '"Options" to see a list of all available options for a command'
-            ]
+            ],
+            flexible: true
         }, {
             index: 1,
             name: 'Command name => Only when calling "options" as your first argument',
             options: [
                 'Any command name'
-            ]
+            ],
+            flexible: true
         }
-    ]
+    ],
+    flags: []
 };

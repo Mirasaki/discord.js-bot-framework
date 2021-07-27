@@ -58,5 +58,6 @@ exports.args = {
             flexible: true
         }
     ],
-    optional: []
+    optional: [],
+    flags: []
 };

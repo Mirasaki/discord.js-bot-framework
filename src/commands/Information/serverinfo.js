@@ -103,7 +103,8 @@ exports.help = {
 
 exports.args = {
     required: [],
-    optional: []
+    optional: [],
+    flags: []
 };
 
 async function trimArray(arr, maxLen) {

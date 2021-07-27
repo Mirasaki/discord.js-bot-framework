@@ -3,10 +3,37 @@ const { sep } = require('path');
 const mainDirectory = './src/commands';
 const allCategories = readdirSync(mainDirectory).filter(e => !e.startsWith('.') && !e.endsWith('.js'));
 
-const { success, error } = require('log-symbols');
+const { success, error, info } = require('log-symbols');
 const { Collection } = require('discord.js');
 const { getLevelCache } = require('../handlers/permissions');
 const { validatePermissions } = require('./permissions');
+
+/* class CommandError extends Error {
+    constructor(message, commandName, path, ...params) {
+        super(...params);
+        this.message = message;
+        this.name = 'CommandError';
+        this.command = commandName;
+        this.path = path;
+        this.stack = false;
+    }
+}*/
+
+const commandError = (
+    message,
+    commandName,
+    path
+) => {
+    console.log(`${info} Loading: ${commandName}`);
+    console.error(`
+    Command Validation Error
+        at ${path}
+
+    ${error} ${message}
+`);
+    process.exit(1);
+};
+
 
 module.exports.loadCommands = (client, counter = 0) => {
     client.commands = new Collection();
@@ -99,30 +126,31 @@ module.exports.forceUnloadCommand = (client, commandName) => {
 
 const validateCommand = (client, cmd, origin) => {
 
-    if (!origin.replace('.js', '').endsWith(cmd.help.name)) throw new Error(`\nInvalid command name, make sure your exports.help.name is the same as the file name without extension!\n    at ${origin}`);
+    if (!origin.replace('.js', '').endsWith(cmd.help.name)) commandError('Invalid command name, make sure your exports.help.name is the same as the file name without extension!', cmd.help.name, origin);
 
     const levels = getLevelCache();
 
-    if (levels[cmd.config.permLevel] === undefined) throw new Error(`Unsupported permission level\n    at ${origin}`);
+    if (levels[cmd.config.permLevel] === undefined) commandError('Unsupported permission level', cmd.help.name, origin);
 
-    if (!cmd.config) throw new Error(`Missing config exports!\n\n    at ${origin}`);
-    if (!cmd.help) throw new Error(`Missing help exports!\n\n    at ${origin}`);
-    if (!cmd.args) throw new Error(`Missing args exports!\n\n    at ${origin}`);
-    if (!cmd.args.optional) throw new Error(`Missing args.optional export, please export as an empty array if none apply here!\n\n    at ${origin}`);
-    if (!cmd.args.required) throw new Error(`Missing args.required export, please export as an empty array if none apply here!\n\n    at ${origin}`);
+    if (!cmd.config) commandError('Missing config exports!', cmd.help.name, origin);
+    if (!cmd.help) commandError('Missing help exports!', cmd.help.name, origin);
+    if (!cmd.args) commandError('Missing args exports!', cmd.help.name, origin);
+    if (!cmd.args.optional) commandError('Missing args.optional export, please export as an empty array if none apply here!', cmd.help.name, origin);
+    if (!cmd.args.required) commandError('Missing args.required export, please export as an empty array if none apply here!', cmd.help.name, origin);
+    if (!cmd.args.flags) commandError('Missing args.flags export, please export as an empty array if none apply here!', cmd.help.name, origin);
 
     const badTypes = checkExports(cmd.config, cmd.help, cmd.args);
 
-    if (badTypes.length) throw new Error(`Invalid command exports\n\n    at ${origin}\n\n    ${badTypes.join('\n    ')}\n\n`);
+    if (badTypes.length) commandError(`Invalid command exports:\n        ${badTypes.join('\n        ')}`, cmd.help.name, origin);
 
     validatePermissions(cmd.config.clientPermissions, cmd.help.name);
     validatePermissions(cmd.config.userPermissions, cmd.help.name);
 
-    if (client.commands.get(cmd.help.name)) throw new Error(`Two or more commands have the same name: ${cmd.help.name}\n    at: ${origin}`);
+    if (client.commands.get(cmd.help.name)) commandError(`Two or more commands have the same name: ${cmd.help.name}`, cmd.help.name, origin);
 
     cmd.config.aliases.forEach(alias => {
-        if (client.aliases.get(alias)) throw new Error(`Two commands or more commands have the same aliases: ${alias}\n    at: ${origin}`);
-        client.aliases.set(alias, cmd.help.name);
+        if (client.aliases.get(alias)) commandError(`Two commands or more commands have the same alias: ${alias}\n        1st occurrence: ${client.aliases.get(alias)}\n        2nd occurrence: ${cmd.help.name}`, cmd.help.name, origin);
+        else client.aliases.set(alias, cmd.help.name);
     });
 
     return true;
@@ -131,14 +159,14 @@ const validateCommand = (client, cmd, origin) => {
 
 const checkExports = (config, help, args, wrongTypes = []) => {
 
+    Object.entries(configTypes).forEach(entry => { if (config[entry[0]] == undefined) wrongTypes.push(`You are missing the config property => config.${entry[0]}`); });
+
+    Object.entries(helpTypes).forEach(entry => { if (help[entry[0]] == undefined) wrongTypes.push(`You are missing the help property => help.${entry[0]}`); });
+
     Object.entries(config).forEach(([key, value]) => {
         if (!configTypes[key]) wrongTypes.push(`config.${key} -> property is not supported`);
         if (configTypes[key] === 'array') Array.isArray(value) ? true : wrongTypes.push(`config.${key} -> expected an array, received ${typeof value}`);
         else if (typeof value != configTypes[key]) wrongTypes.push(`config.${key} -> expected ${configTypes[key]}, received ${typeof value}`);
-    });
-
-    Object.entries(configTypes).forEach(entry => {
-        if (config[entry[0]] == undefined) wrongTypes.push(`You are missing the config property => config.${entry[0]}`);
     });
 
     Object.entries(help).forEach(([key, value]) => {
@@ -148,14 +176,8 @@ const checkExports = (config, help, args, wrongTypes = []) => {
         else if (typeof value === 'string' && value.length < 1) wrongTypes.push(`help.${key} -> expected at least 1 character, received none`);
     });
 
-    Object.entries(helpTypes).forEach(entry => {
-        if (help[entry[0]] == undefined) wrongTypes.push(`You are missing the help property => help.${entry[0]}`);
-    });
-
     let i = 0;
-
     if (args && args.required) {
-
         Object.entries(args.required).forEach(obj => {
             Object.entries(obj[1]).forEach(([key, value]) => {
                 if (!argTypes[key]) wrongTypes.push(`args.required[${i}].${key} -> property is not supported`);
@@ -163,9 +185,7 @@ const checkExports = (config, help, args, wrongTypes = []) => {
                 else if (typeof value != argTypes[key]) wrongTypes.push(`args.required[${i}].${key} -> expected ${argTypes[key]}, received ${typeof value}`);
                 else if (typeof value === 'string' && value.length < 1) wrongTypes.push(`args.required[${i}].${key} -> expected at least 1 character, received none`);
             });
-            Object.entries(argTypes).forEach(entry => {
-                if (obj[1][entry[0]] == undefined) wrongTypes.push(`args.required[${i}] => missing property => ${entry[0]}!`);
-            });
+            Object.entries(argTypes).forEach(entry => { if (obj[1][entry[0]] == undefined) wrongTypes.push(`args.required[${i}] => missing property => ${entry[0]}!`); });
             if (!obj[1].flexible && (obj[1].options == undefined || !obj[1].options.length)) wrongTypes.push(`args.required[${i}].flexible = false, yet there are no supported options!`);
             i++;
         });
@@ -173,7 +193,6 @@ const checkExports = (config, help, args, wrongTypes = []) => {
     }
 
     i = 0;
-
     if (args && args.optional) {
         Object.entries(args.optional).forEach(obj => {
             Object.entries(obj[1]).forEach(([key, value]) => {
@@ -182,8 +201,22 @@ const checkExports = (config, help, args, wrongTypes = []) => {
                 else if (typeof value != argTypes[key]) wrongTypes.push(`args.required[${i}].${key} -> expected ${argTypes[key]}, received ${typeof value}`);
                 else if (typeof value === 'string' && value.length < 1) wrongTypes.push(`args.required[${i}].${key} -> expected at least 1 character, received none`);
             });
-            Object.entries(argTypes).forEach(entry => {
-                if (entry[0] != 'flexible' && obj[1][entry[0]] == undefined) wrongTypes.push(`args.optional[${i}] => missing property => ${entry[0]}!`);
+            Object.entries(argTypes).forEach(entry => { if (obj[1][entry[0]] == undefined) wrongTypes.push(`args.optional[${i}] => missing property => ${entry[0]}!`); });
+            i++;
+        });
+    }
+
+    i = 0;
+    if (args && args.flags) {
+        Object.entries(args.flags).forEach(obj => {
+            Object.entries(obj[1]).forEach(([key, value]) => {
+                if (!flagTypes[key]) wrongTypes.push(`args.flags[${i}].${key} -> property is not supported`);
+                else if (flagTypes[key] === 'array') Array.isArray(value) ? true : wrongTypes.push(`args.flags[${i}].${key} -> expected an array, received ${typeof value}`);
+                else if (typeof value != flagTypes[key]) wrongTypes.push(`args.flags[${i}].${key} -> expected ${argTypes[key]}, received ${typeof value}`);
+                else if (typeof value === 'string' && value.length < 1) wrongTypes.push(`args.string[${i}].${key} -> expected at least 1 character, received none`);
+            });
+            Object.entries(flagTypes).forEach(entry => {
+                if (obj[1][entry[0]] == undefined) wrongTypes.push(`args.flags[${i}] => missing property => ${entry[0]}!`);
             });
             i++;
         });
@@ -217,4 +250,11 @@ const argTypes = {
     name: 'string',
     options: 'array',
     flexible: 'boolean'
+};
+
+const flagTypes = {
+    flag: 'string',
+    result: 'string',
+    permLevel: 'string',
+    permissions: 'array'
 };

@@ -45,7 +45,8 @@ exports.args = {
             flexible: true
         }
     ],
-    optional: []
+    optional: [],
+    flags: []
 };
 
 async function trimArray(arr, maxLen) {

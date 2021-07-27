@@ -6,9 +6,7 @@ const levelCache = {};
 module.exports.specialPermissions = {
     support: [],
     admins: [],
-    developers: [
-        '290182686365188096'
-    ]
+    developers: ['290182686365188096']
 };
 
 module.exports.getLevelCache = () => {
@@ -62,14 +60,22 @@ module.exports.checkDiscordPermissions = (client, message, cmd) => {
     let botPermsAreValid = true;
     let userPermsAreValid = true;
 
-    if (!message.channel.permissionsFor(client.user.id).has('ADMINISTRATOR')) {
-        const missingBotPermissions = permissions.filter(perm => !message.channel.permissionsFor(client.user.id).has(perm));
-        if (missingBotPermissions.length >= 1) botPermsAreValid = missingBotPermissions;
+    if (!message.guild.me.hasPermission('ADMINISTRATOR')) {
+        if (!message.channel.permissionsFor(client.user.id)) {
+            botPermsAreValid = permissions;
+        } else {
+            const missingBotPermissions = permissions.filter(perm => !message.channel.permissionsFor(client.user.id).has(perm));
+            if (missingBotPermissions.length >= 1) botPermsAreValid = missingBotPermissions;
+        }
     }
 
-    if (!message.channel.permissionsFor(message.author.id).has('ADMINISTRATOR')) {
-        const missingUserPermissions = userPermissions.filter(perm => !message.channel.permissionsFor(message.author.id).has(perm));
-        if (missingUserPermissions.length >= 1) userPermsAreValid = missingUserPermissions;
+    if (!message.member.hasPermission('ADMINISTRATOR')) {
+        if (!message.channel.permissionsFor(message.author.id)) {
+            userPermsAreValid = userPermissions;
+        } else {
+            const missingUserPermissions = userPermissions.filter(perm => !message.channel.permissionsFor(message.author.id).has(perm));
+            if (missingUserPermissions.length >= 1) userPermsAreValid = missingUserPermissions;
+        }
     }
 
     return {
@@ -131,6 +137,7 @@ const permissionLevels = [
         level: 3,
         name: 'Administrator',
         hasLevel: async (message) => {
+            if (message.member.hasPermission('ADMINISTRATOR')) return true;
             const guildSettings = await getSettings(message.guild.id);
             const adminRole = message.guild.roles.cache.get(guildSettings.permissions.admin_role);
             if (adminRole && message.member.roles.cache.has(adminRole.id)) return true;
@@ -141,7 +148,11 @@ const permissionLevels = [
     {
         level: 4,
         name: 'Server Owner',
-        hasLevel: (message) => message.channel.type === 'text' ? (message.guild.ownerID === message.author.id ? true : false) : false
+        hasLevel: (message) => {
+            if (!message.guild || !message.guild.owner || !message.guild.ownerID) return false;
+            if (message.author.id == message.guild.ownerID) return true;
+            return false;
+        }
     },
 
     {

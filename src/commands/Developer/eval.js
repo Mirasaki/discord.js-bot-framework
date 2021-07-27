@@ -76,7 +76,8 @@ exports.args = {
             flexible: true
         }
     ],
-    optional: []
+    optional: [],
+    flags: []
 };
 
 const clean = (text) => {
