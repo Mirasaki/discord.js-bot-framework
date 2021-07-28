@@ -141,6 +141,7 @@ const validateCommand = (client, cmd, path) => {
   if (!cmd.config.clientPermissions) cmd.config.clientPermissions = []
   if (!cmd.config.userPermissions) cmd.config.userPermissions = []
   if (!cmd.config.throttling) cmd.config.throttling = false
+  if (!cmd.help.usage) cmd.help.usage = '{{command}}'
 
   const thisObj = { name: cmd.help.name, origin: path }
   const check = tempCommands.find((e) => e.name === cmd.help.name)
