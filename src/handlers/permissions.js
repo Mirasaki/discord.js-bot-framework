@@ -22,7 +22,7 @@ module.exports.getPermissionLevel = (member, channel) => {
   }
 }
 
-module.exports.checkAndExecuteIfPass = async (client, message, cmd) => {
+module.exports.checkAndExecuteIfPass = async (client, message, cmd, guildSettings, args) => {
   const { member, channel } = message
   const clientId = client.user.id
   const userId = member.user.id
@@ -62,9 +62,6 @@ module.exports.checkAndExecuteIfPass = async (client, message, cmd) => {
     && !this.hasChannelPerm(client.user.id, channel, 'ADMINISTRATOR')
   ) for (const perm of userPerms.required) if (!this.hasChannelPerm(userId, channel, perm)) userPerms.missing.push(perm)
 
-  // Handle Args
-  // End Handle Args
-
   // Custom reply() function at client.reply('type = cmd/slash', message)
 
   const valid = userPerms.missing.length < 1 && clientPerms.missing.length < 1
@@ -95,7 +92,7 @@ module.exports.checkAndExecuteIfPass = async (client, message, cmd) => {
         return channel.send(onCooldown.replace('{{user}}', `${member.toString()}`))
       }
     }
-    cmd.run({ client, message })
+    cmd.run({ client, message, guildSettings, args })
     log(`${member.user.tag} (${permissionName}) ran command ${cmd.help.name}`, 'cmd')
   }
 }

@@ -1,4 +1,4 @@
-exports.run = ({ message }) => {
+exports.run = ({ client, message, guildSettings, args }) => {
   message.channel.send('...')
 }
 

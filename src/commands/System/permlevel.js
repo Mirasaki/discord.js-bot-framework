@@ -1,15 +1,17 @@
 const { getPermissionLevel } = require('../../handlers/permissions')
 const { MessageEmbed } = require('discord.js')
 
-exports.run = ({ client, message }) => {
+exports.run = ({ client, message, guildSettings, args }) => {
   const { member, channel, guild } = message
   const perms = getPermissionLevel(member, channel, guild)
   const { permissionLevel, permissionName } = perms
-
-  const permLevelEmbed = new MessageEmbed()
-    .setColor('WHITE')
-    .setDescription(`${member.toString()}, your permission level is: __${permissionLevel}__ - **${permissionName}**`)
-  channel.send({ embeds: [permLevelEmbed] })
+  channel.send({
+    embeds: [
+      new MessageEmbed()
+        .setColor('WHITE')
+        .setDescription(`${member.toString()}, your permission level is: __${permissionLevel}__ - **${permissionName}**`)
+    ]
+  })
 }
 
 exports.config = {
