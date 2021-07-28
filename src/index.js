@@ -4,9 +4,7 @@ require('dotenv').config({
 
 const { Client, Intents } = require('discord.js')
 const { registerCommands } = require('./handlers/commands.js')
-const { initializeListeners } = require('./handlers/listeners.js')
-const { connect, connection } = require('mongoose')
-const { log } = require('./handlers/logger');
+const { initializeListeners } = require('./handlers/listeners.js');
 
 (async () => {
   const client = new Client({
@@ -23,16 +21,6 @@ const { log } = require('./handlers/logger');
   })
   registerCommands(client)
   initializeListeners(client)
-  await connect(process.env.MONGO_LINK, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useFindAndModify: false
-  }).catch(error => console.log(error))
+  await require('./mongoConnection')()
   client.login(process.env.DISCORD_TOKEN)
 })()
-
-connection.once('open', () => {
-  log('Connected to MongoDB!', 'success')
-})
-
-connection.on('error', console.error.bind(console, 'MongoDB Connection Error:'))

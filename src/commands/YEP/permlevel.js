@@ -17,7 +17,6 @@ exports.config = {
   required: false,
   aliases: [],
   permLevel: 'User',
-  cooldown: 30,
   clientPermissions: ['EMBED_LINKS'],
   userPermissions: []
 }

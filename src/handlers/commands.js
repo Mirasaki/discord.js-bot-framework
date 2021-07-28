@@ -138,9 +138,9 @@ const validateCommand = (client, cmd, path) => {
   if (!cmd.help.name) cmd.help.name = commandNameFromFile
   if (!cmd.help.category) cmd.help.category = cmd.help.category === 'commands' ? 'Uncategorized' : commandCategoryFromFile
   if (!cmd.config.aliases) cmd.config.aliases = []
-  if (!cmd.config.cooldown) cmd.config.cooldown = -1
   if (!cmd.config.clientPermissions) cmd.config.clientPermissions = []
   if (!cmd.config.userPermissions) cmd.config.userPermissions = []
+  if (!cmd.config.throttling) cmd.config.throttling = false
 
   const thisObj = { name: cmd.help.name, origin: path }
   const check = tempCommands.find((e) => e.name === cmd.help.name)
@@ -206,9 +206,24 @@ const validateExports = (originalObj, targetObj) => {
   const exports = 'exports.' + (counter === 0 ? 'help' : (counter === 1 ? 'config' : 'slash'))
   const problems = []
   Object.entries(originalObj).forEach(([key, value]) => {
+    const { throttling } = targetObj
+    if (key === 'throttling' && targetObj[key] === false) return
+    if (
+      key === 'throttling'
+      && throttling
+      && throttling !== false
+      && (
+        !throttling.usages
+        || typeof throttling.usages !== 'number'
+        || throttling.usages <= 0
+        || !throttling.duration
+        || typeof throttling.duration !== 'number'
+        || throttling.duration <= 0
+      )
+    ) problems.push(`Invalid ${exports}.throttling property provided.\n    Valid example: throttling: { usages: 2, duration: 20 }`)
     // We turn the eslint warning off because we only touch Objects with hardcoded keys
     // eslint-disable-next-line no-prototype-builtins
-    if (!targetObj.hasOwnProperty(key)) problems.push(`Missing ${exports} property <${key}> (type ${typeof value})`)
+    else if (!targetObj.hasOwnProperty(key)) problems.push(`Missing ${exports} property <${key}> (type ${typeof value})`)
     else if (value === 'array' && Array.isArray(targetObj[key]) === false) problems.push(`Wrong ${exports} type ${key}: expected array, received ${typeof targetObj[key]}`)
     else if (value !== 'array' && typeof targetObj[key] !== typeof value) problems.push(`Wrong ${exports} type ${key}: expected ${typeof value} received ${typeof targetObj[key]}>`)
   })
@@ -231,9 +246,9 @@ const configTypes = {
   required: true,
   aliases: 'array',
   permLevel: '',
-  cooldown: 0,
   clientPermissions: 'array',
-  userPermissions: 'array'
+  userPermissions: 'array',
+  throttling: {}
 }
 
 const slashTypes = {

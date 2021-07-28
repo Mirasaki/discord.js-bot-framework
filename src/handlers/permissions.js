@@ -1,6 +1,7 @@
 // https://discord.com/developers/docs/topics/permissions
 
 const permConfig = require('../../config/permissionLevels')
+const { throttleCommand } = require('../mongo/throttling')
 const { log } = require('./logger')
 const permLevels = {}
 for (let i = 0; i < permConfig.length; i++) {
@@ -21,14 +22,11 @@ module.exports.getPermissionLevel = (member, channel) => {
   }
 }
 
-let cmdCooldown = []
-module.exports.checkAndExecuteIfPass = (client, message, cmd) => {
+module.exports.checkAndExecuteIfPass = async (client, message, cmd) => {
   const { member, channel } = message
   const clientId = client.user.id
   const userId = member.user.id
   const userPermLevel = this.getPermissionLevel(member, channel)
-  const commandCooldown = cmd.config.cooldown * 1000
-  const cdString = `${userId}-${cmd.help.name}-${Date.now() + commandCooldown}`
   const { permissionName, permissionLevel } = userPermLevel
   const embed = {
     color: 'RED',
@@ -64,19 +62,6 @@ module.exports.checkAndExecuteIfPass = (client, message, cmd) => {
     && !this.hasChannelPerm(client.user.id, channel, 'ADMINISTRATOR')
   ) for (const perm of userPerms.required) if (!this.hasChannelPerm(userId, channel, perm)) userPerms.missing.push(perm)
 
-  // Check if the user is on cooldown
-  if (commandCooldown > 0) {
-    const userString = cmdCooldown.find(string => string.startsWith(`${userId}-${cmd.help.name}`))
-    if (userString) {
-      const cdExpires = userString.slice(userString.length - 13, userString.length)
-      return channel.send(`${member.toString()}, you can use \`${cmd.help.name}\` again in ${
-        Math.round((cdExpires - Date.now()) / 1000) === 1
-        ? '1 second!'
-        : `${Math.round((cdExpires - Date.now()) / 1000)} seconds!`
-      }`)
-    }
-  }
-
   // Handle Args
   // End Handle Args
 
@@ -103,17 +88,15 @@ module.exports.checkAndExecuteIfPass = (client, message, cmd) => {
     }
     return channel.send({ embeds: [embed] })
   } else {
+    // Don't apply command throttling to the highest permission level
+    if (permissionLevel < permConfig.sort((a, b) => a.level > b.level ? -1 : 1)[0].level) {
+      const onCooldown = await throttleCommand(userId, cmd)
+      if (typeof onCooldown === 'string') {
+        return channel.send(onCooldown.replace('{{user}}', `${member.toString()}`))
+      }
+    }
     cmd.run({ client, message })
     log(`${member.user.tag} (${permissionName}) ran command ${cmd.help.name}`, 'cmd')
-    if (
-      permissionLevel < permConfig.sort((a, b) => a.level > b.level ? -1 : 1)[0].level
-      && commandCooldown > 0
-    ) {
-      cmdCooldown.push(cdString)
-      setTimeout(() => {
-        cmdCooldown = cmdCooldown.filter((string) => { return string !== cdString })
-      }, commandCooldown)
-    }
   }
 }
 

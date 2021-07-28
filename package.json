@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon run node ."
+    "dev": "nodemon run node .",
+    "resetThrottling": "node scripts/purgeCmdThrottleCollection.js"
   },
   "repository": {
     "type": "git",
