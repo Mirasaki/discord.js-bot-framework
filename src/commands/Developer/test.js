@@ -1,12 +1,5 @@
-// const { updateSettingsDatabase } = require('../../database/helpers/settings');
-
-exports.run = async ({ client, message }) => {
-  return message.channel.send('YEP')
-  // client.send('yes', message, 'success!')
-  // client.send('wait', message, 'working!')
-  // client.send('no', message, 'failed!')
-  // client.send('test', message, 'error!')
-  // // updateSettingsDatabase();
+exports.run = ({ message }) => {
+  message.channel.send('...')
 }
 
 exports.config = {
@@ -16,10 +9,6 @@ exports.config = {
   permLevel: 'User',
   clientPermissions: [],
   userPermissions: [],
-  args: {
-    required: [],
-    optional: []
-  },
   throttling: {
     usages: 1,
     duration: 5

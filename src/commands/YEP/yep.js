@@ -1,5 +1,5 @@
-exports.run = async ({ client, message }) => {
-  return message.channel.send({
+exports.run = ({ client, message }) => {
+  message.channel.send({
     content: 'Yep!'
   })
 }
