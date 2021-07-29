@@ -1,5 +1,4 @@
 const { MessageEmbed } = require('discord.js')
-const colors = require('../../../config/colors.json')
 
 exports.run = async ({ client, message, guildSettings, args: [action, ...prefix] }) => {
   const { channel, member, guild } = message
@@ -10,7 +9,7 @@ exports.run = async ({ client, message, guildSettings, args: [action, ...prefix]
       channel.send({
         embeds: [
           new MessageEmbed()
-            .setColor(colors.invisible)
+            .setColor(client.json.colors.invisible)
             .setAuthor(`Available prefixes for ${guild.name}`)
             .setDescription(`<@!${client.user.id}> - \`${prefixes.join('` - `')}\``)
         ]
