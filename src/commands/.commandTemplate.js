@@ -24,6 +24,11 @@ exports.help = {
   examples: []
 }
 
+exports.args = {
+  required: [],
+  optional: []
+}
+
 exports.slash = {
   enabled: true,
   reload: true,

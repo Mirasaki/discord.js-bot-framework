@@ -10,19 +10,23 @@ module.exports.checkHasRequiredArgs = (prefix, message, cmd, args) => {
   if (cmd.args) {
     if (cmd.args.required) {
       for (const arg of cmd.args.required) {
+        let string = arg.options.join('`, `')
+        if (string.length > 1004) string = `${string.slice(0, 1001)}...`
         if (!args[arg.index]) {
-          inputErrorEmbed.addField(`**__Missing REQUIRED argument__** #${arg.index + 1} - ${titleCase(arg.name)}`, `**Options:** \`${arg.options.join('`, `')}\``, true)
+          inputErrorEmbed.addField(`**__Missing REQUIRED argument__** #${arg.index + 1} - ${titleCase(arg.name)}`, `**Options:** \`${string}\``, true)
         } else if (!arg.flexible && !arg.options.includes(args[arg.index])) {
           inputErrorEmbed.setColor('ORANGE')
-          inputErrorEmbed.addField(`**__Invalid REQUIRED argument__** #${arg.index + 1} - ${titleCase(arg.name)}`, `**Options:** \`${arg.options.join('`, `')}\``, true)
+          inputErrorEmbed.addField(`**__Invalid REQUIRED argument__** #${arg.index + 1} - ${titleCase(arg.name)}`, `**Options:** \`${string}\``, true)
         }
       }
     }
 
     if (cmd.args.optional) {
       for (const arg of cmd.args.optional.filter(a => a.flexible === false)) {
+        let string = arg.options.join('`, `')
+        if (string.length > 1004) string = `${string.slice(0, 1001)}...`
         if (args[arg.index] && !arg.options.includes(args[arg.index])) {
-          inputErrorEmbed.addField(`**__Invalid OPTIONAL argument__** #${arg.index + 1} - ${titleCase(arg.name)}`, `**Options:** \`${arg.options.join('`, `')}\``, true)
+          inputErrorEmbed.addField(`**__Invalid OPTIONAL argument__** #${arg.index + 1} - ${titleCase(arg.name)}`, `**Options:** \`${string}\``, true)
         }
       }
     }
