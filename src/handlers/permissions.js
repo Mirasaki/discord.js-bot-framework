@@ -2,6 +2,7 @@
 
 const permConfig = require('../../config/permissionLevels')
 const { throttleCommand } = require('../mongo/throttling')
+const { parseSnakeCaseArray } = require('../tools')
 const { log } = require('./logger')
 const permLevels = {}
 for (let i = 0; i < permConfig.length; i++) {
@@ -71,7 +72,7 @@ module.exports.checkAndExecuteIfPass = async (client, message, cmd, guildSetting
       const { missing } = clientPerms
       embed.fields.push({
         name: `I lack the required permission${missing.length === 1 ? '' : 's'}:`,
-        value: `${getNormalPermissionNames(missing)}`,
+        value: `${parseSnakeCaseArray(missing)}`,
         inline: true
       })
     }
@@ -79,7 +80,7 @@ module.exports.checkAndExecuteIfPass = async (client, message, cmd, guildSetting
       const { missing } = userPerms
       embed.fields.push({
         name: `You lack the required permission${missing.length === 1 ? '' : 's'}:`,
-        value: `${getNormalPermissionNames(missing)}`,
+        value: `${parseSnakeCaseArray(missing)}`,
         inline: true
       })
     }
@@ -92,8 +93,8 @@ module.exports.checkAndExecuteIfPass = async (client, message, cmd, guildSetting
         return channel.send(onCooldown.replace('{{user}}', `${member.toString()}`))
       }
     }
-    cmd.run({ client, message, guildSettings, args })
     log(`${member.user.tag} (${permissionName}) ran command ${cmd.help.name}`, 'cmd')
+    cmd.run({ client, message, guildSettings, args })
   }
 }
 
@@ -145,11 +146,3 @@ const validPermissions = [
   'USE_PUBLIC_THREADS',
   'USE_PRIVATE_THREADS'
 ]
-
-const getNormalPermissionNames = (arr) => {
-  return arr.map((perm) => {
-    perm = perm.toLowerCase().split(/[ _]+/)
-    for (let i = 0; i < perm.length; i++) perm[i] = perm[i].charAt(0).toUpperCase() + perm[i].slice(1)
-    return perm.join(' ')
-  }).join('\n')
-}
