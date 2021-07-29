@@ -8,7 +8,7 @@ module.exports.initializeListeners = (client, counter = 0) => {
     const eventName = path.slice(path.lastIndexOf('\\') + 1, path.length - 3)
     const check = loadedListeners.find((e) => e.name === eventName)
     const thisObj = { name: eventName, origin: path }
-    if (!validEvents.includes(eventName)) throw new TypeError(`Invalid Event name provided at ${path}!`)
+    if (!this.validEvents.includes(eventName)) throw new TypeError(`Invalid Event name provided at ${path}!`)
     if (check) throw new Error(`Duplicate Event: ${eventName} already loaded/bound!\nOriginal event: ${check.origin}\nRequested event: ${path}`)
     counter++
     loadedListeners.push(thisObj)
@@ -24,7 +24,7 @@ module.exports.initializeListeners = (client, counter = 0) => {
   console.log('Finished initializing listeners!\n')
 }
 
-const validEvents = [
+module.exports.validEvents = [
   'applicationCommandCreate',
   'applicationCommandDelete',
   'applicationCommandUpdate',
