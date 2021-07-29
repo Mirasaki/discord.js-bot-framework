@@ -25,7 +25,6 @@ const settingsCache = new Map()
 module.exports.getSettingsCache = async (guildId) => {
   let data = settingsCache.get(guildId)
   if (!settingsCache.has(guildId)) {
-    console.log('Fetching settings from DB!')
     const guildSettings = await getSettingsFromDB(guildId)
     data = guildSettings
     settingsCache.set(guildId, data)
