@@ -3,9 +3,10 @@ const { getFiles } = require('../tools')
 module.exports.initializeListeners = (client, counter = 0) => {
   const loadedListeners = []
   console.log('Initializing listeners:')
-  for (const path of getFiles(process.env.EVENTS_PATH, '.js')) {
+  for (let path of getFiles(process.env.EVENTS_PATH, '.js')) {
+    path = path.replace(/\\/g, '/')
     const event = require(path)
-    const eventName = path.slice(path.lastIndexOf('\\') + 1, path.length - 3)
+    const eventName = path.slice(path.lastIndexOf('/') + 1, path.length - 3)
     const check = loadedListeners.find((e) => e.name === eventName)
     const thisObj = { name: eventName, origin: path }
     if (!this.validEvents.includes(eventName)) throw new TypeError(`Invalid Event name provided at ${path}!`)
@@ -16,7 +17,6 @@ module.exports.initializeListeners = (client, counter = 0) => {
     console.log(`    ${loadedListeners.indexOf(thisObj) + 1} ${eventName}: ${
       thisObj.origin.slice(
         thisObj.origin
-        .replace(/\\/g, '/')
         .indexOf(process.env.EVENTS_PATH
       ), thisObj.origin.length
     )}`)

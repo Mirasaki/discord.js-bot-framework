@@ -122,6 +122,7 @@ const validateCommand = (client, cmd, path) => {
 
   if (!slash.name) slash.name = commandNameFromFile
   if (!slash.category) slash.category = slash.category === 'commands' ? 'Uncategorized' : commandCategoryFromFile
+  if (!slash.listeners) slash.listeners = []
   if (!config.clientPermissions) config.clientPermissions = []
   if (!config.userPermissions) config.userPermissions = []
   if (!config.throttling) config.throttling = false
@@ -136,7 +137,6 @@ const validateCommand = (client, cmd, path) => {
       : tempCommands.indexOf(thisObj) + 1
     } ${slash.name}: ${thisObj.origin.slice(
       thisObj.origin
-      .replace(/\\/g, '/')
       .indexOf(process.env.COMMANDS_PATH), thisObj.origin.length
     )}`
   if (
@@ -227,5 +227,6 @@ const slashTypes = {
   globalCommand: true,
   testCommand: true,
   serverIds: 'array',
-  options: 'array'
+  options: 'array',
+  listeners: []
 }
