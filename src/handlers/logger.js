@@ -65,7 +65,6 @@ exports.log = (content, type = 'log') => {
     case 'error': str += `${chalk.bgRed(type.toUpperCase())}`; break
     case 'debug': str += `${chalk.bgMagenta(type.toUpperCase())}`; break
     case 'warning': str += `${chalk.bgRed(type.toUpperCase())}`; break
-    case 'cmd': str += `${chalk.black.bgWhite(type.toUpperCase())}`; break
     case 'slash': str += `${chalk.black.bgWhite(type.toUpperCase())}`; break
     case 'success': str += `${chalk.bgGreen(type.toUpperCase())}`; break
     case 'info': str += `${chalk.bgWhite(type.toUpperCase())}`; break

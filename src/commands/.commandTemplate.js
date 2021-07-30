@@ -1,11 +1,10 @@
-exports.run = ({ client, message, guildSettings, args }) => {
+exports.run = ({ client, interaction, guildSettings, args }) => {
   //
 }
 
 exports.config = {
   enabled: null,
   required: null,
-  aliases: [],
   permLevel: '',
   clientPermissions: [],
   userPermissions: [],
@@ -15,25 +14,22 @@ exports.config = {
   }
 }
 
-exports.help = {
+exports.slash = {
   name: '',
   category: '',
-  shortDescription: '',
-  longDescription: '',
-  usage: '<command>',
-  examples: []
-}
-
-exports.args = {
-  required: [],
-  optional: []
-}
-
-exports.slash = {
+  description: '',
   enabled: true,
   reload: true,
   globalCommand: false,
   testCommand: true,
   serverIds: [],
-  options: []
+  options: [],
+  listeners: [
+    {
+      customId: 'custom_id',
+      onClick: async function (client, interaction, guildSettings) {
+
+      }
+    }
+  ]
 }

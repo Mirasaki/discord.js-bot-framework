@@ -1,9 +1,16 @@
 const { validEvents } = require('../../handlers/listeners')
 
-exports.run = ({ client, message, guildSettings, args }) => {
-  const { channel, guild, member, user } = message
+exports.run = async ({ client, interaction, guildSettings, args }) => {
+  if (!args[0]) {
+    return interaction.reply({
+      content: 'Include one of the available events!',
+      ephemeral: true
+    })
+  }
+
+  const { channel, guild, member, user } = interaction
   const role = member.roles.cache.random() || null
-  const event = args.shift()
+  const event = args[0].value
 
   const getObj = (str) => {
     switch (str) {
@@ -16,55 +23,18 @@ exports.run = ({ client, message, guildSettings, args }) => {
   }
 
   client.emit(event, getObj(args[0]), getObj(args[1]), getObj(args[2]))
+  interaction.reply({
+    content: `Successfully emitted ${event}`,
+    ephemeral: true
+  })
 }
 
 exports.config = {
   enabled: true,
   required: false,
-  aliases: [],
   permLevel: 'Developer',
   clientPermissions: [],
-  userPermissions: [],
-  throttling: {
-    usages: 1,
-    duration: 5
-  }
-}
-
-exports.help = {
-  shortDescription: 'Emit a discord.js event to the client',
-  longDescription: 'Emit a discord.js event to the client',
-  usage: '<command> <event>',
-  examples: [
-    'emit guildCreate'
-  ]
-}
-
-exports.args = {
-  required: [
-    {
-      name: 'event',
-      index: 0,
-      flexible: false,
-      options: validEvents.filter((event) => (
-        !event.match(/messageReaction|interaction|application|channelPins/)
-      ))
-    },
-    {
-      name: 'options',
-      index: 1,
-      flexible: false,
-      options: [
-        'channel',
-        'guild',
-        'member',
-        'message',
-        'role',
-        'user'
-      ]
-    }
-  ],
-  optional: []
+  userPermissions: []
 }
 
 const eventsData = []
@@ -78,6 +48,7 @@ validEvents.filter((event) => (
 })
 
 exports.slash = {
+  description: 'Emit a discord.js event to the client',
   enabled: true,
   reload: true,
   globalCommand: false,
@@ -97,8 +68,8 @@ exports.slash = {
       choices: eventsData.slice(25, 49)
     },
     {
-      name: 'u-z',
-      description: 'Events (U-Z) to emit to the client',
+      name: 't-z-custom',
+      description: 'Events (T-Z & Custom) to emit to the client',
       type: 3,
       choices: eventsData.slice(50, eventsData.length)
     }

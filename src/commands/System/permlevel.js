@@ -1,10 +1,8 @@
-const { getPermissionLevel } = require('../../handlers/permissions')
 const { MessageEmbed } = require('discord.js')
 
-exports.run = ({ client, message, guildSettings, args }) => {
-  const { member, channel, guild } = message
-  const perms = getPermissionLevel(member, channel, guild)
-  const { permissionLevel, permissionName } = perms
+exports.run = async ({ client, interaction, guildSettings, args }) => {
+  const { member, channel } = message
+  const { permissionLevel, permissionName } = message.member.perms
   channel.send({
     embeds: [
       new MessageEmbed()
@@ -17,14 +15,17 @@ exports.run = ({ client, message, guildSettings, args }) => {
 exports.config = {
   enabled: true,
   required: false,
-  aliases: [],
   permLevel: 'User',
   clientPermissions: ['EMBED_LINKS'],
   userPermissions: []
 }
 
-exports.help = {
-  shortDescription: 'Tells you your permission level for executing bot commands.',
-  longDescription: 'Tells you your permission level for executing bot commands.',
-  examples: []
+exports.slash = {
+  description: 'Tells you your permission level for executing bot commands.',
+  enabled: true,
+  reload: true,
+  globalCommand: false,
+  testCommand: true,
+  serverIds: [],
+  options: []
 }

@@ -78,6 +78,9 @@ module.exports.validEvents = [
   'stageInstanceCreate',
   'stageInstanceDelete',
   'stageInstanceUpdate',
+  'stickerCreate',
+  'stickerDelete',
+  'stickerUpdate',
   'threadCreate',
   'threadDelete',
   'threadListSync',
@@ -88,5 +91,14 @@ module.exports.validEvents = [
   'userUpdate',
   'voiceStateUpdate',
   'warn',
-  'webhookUpdate'
+  'webhookUpdate',
+
+  /*
+    CUSTOM (non-discord.js)
+    LISTENERS
+  */
+
+  'commandInteraction',
+  'componentInteraction',
+  'selectMenuInteraction'
 ]

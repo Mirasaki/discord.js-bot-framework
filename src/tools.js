@@ -1,7 +1,7 @@
 const { resolve } = require('path')
 const { readdirSync, statSync } = require('fs')
 
-// getFiles() ignores javascript files that start with "."
+// getFiles() ignores files that start with "."
 module.exports.getFiles = (path, extension) => {
   let res = []
   readdirSync(path).forEach((itemInDir) => {

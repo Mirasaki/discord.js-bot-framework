@@ -1,20 +1,19 @@
 // https://discord.com/developers/docs/topics/permissions
+const { parseSnakeCaseArray } = require('../tools')
 
 const permConfig = require('../../config/permissionLevels')
-const { throttleCommand } = require('../mongo/throttling')
-const { parseSnakeCaseArray } = require('../tools')
-const { log } = require('./logger')
 const permLevels = {}
 for (let i = 0; i < permConfig.length; i++) {
   const thisLevel = permConfig[i]
   permLevels[thisLevel.name] = thisLevel.level
 }
+module.exports.permConfig = permConfig
 module.exports.permLevels = permLevels
 
-module.exports.getPermissionLevel = (member, channel) => {
+module.exports.getPermissionLevel = async (member, channel) => {
   const correctOrder = permConfig.sort((a, b) => a.level > b.level ? -1 : 1)
   for (const currentLevel of correctOrder) {
-    if (currentLevel.hasLevel(member, channel)) {
+    if (await currentLevel.hasLevel(member, channel)) {
       return {
         permissionLevel: currentLevel.level,
         permissionName: currentLevel.name
@@ -23,15 +22,14 @@ module.exports.getPermissionLevel = (member, channel) => {
   }
 }
 
-module.exports.checkAndExecuteIfPass = async (client, message, cmd, guildSettings, args) => {
-  const { member, channel } = message
+module.exports.checkCommandPermissions = async (client, member, channel, cmd, interaction) => {
   const clientId = client.user.id
   const userId = member.user.id
-  const userPermLevel = this.getPermissionLevel(member, channel)
+  const userPermLevel = await this.getPermissionLevel(member, channel)
   const { permissionName, permissionLevel } = userPermLevel
   const embed = {
     color: 'RED',
-    title: `There was a problem while using "${cmd.help.name}"`,
+    title: `There was a problem while using "${cmd.slash.name}"`,
     fields: []
   }
 
@@ -46,24 +44,26 @@ module.exports.checkAndExecuteIfPass = async (client, message, cmd, guildSetting
     }**\nYour permission level: __${permissionLevel}__ - **${
       permissionName
     }**`
-    return channel.send({ embeds: [embed] })
+    interaction.reply({
+      embeds: [embed],
+      ephemeral: true
+    })
+    return false
   }
 
   // Checking for required client permissions
   const clientPerms = { required: cmd.config.clientPermissions, missing: [] }
   if (
     clientPerms.required.length >= 1
-    && !this.hasChannelPerm(client.user.id, channel, 'ADMINISTRATOR')
+    && !this.hasChannelPerm(clientId, channel, 'ADMINISTRATOR')
   ) for (const perm of clientPerms.required) if (!this.hasChannelPerm(clientId, channel, perm)) clientPerms.missing.push(perm)
 
   // Checking for (optional) additional required user permissions
   const userPerms = { required: cmd.config.userPermissions, missing: [] }
   if (
     userPerms.required.length >= 1
-    && !this.hasChannelPerm(client.user.id, channel, 'ADMINISTRATOR')
+    && !this.hasChannelPerm(userId, channel, 'ADMINISTRATOR')
   ) for (const perm of userPerms.required) if (!this.hasChannelPerm(userId, channel, perm)) userPerms.missing.push(perm)
-
-  // Custom reply() function at client.reply('type = cmd/slash', message)
 
   const valid = userPerms.missing.length < 1 && clientPerms.missing.length < 1
 
@@ -84,18 +84,12 @@ module.exports.checkAndExecuteIfPass = async (client, message, cmd, guildSetting
         inline: true
       })
     }
-    return channel.send({ embeds: [embed] })
-  } else {
-    // Don't apply command throttling to the highest permission level
-    if (permissionLevel < permConfig.sort((a, b) => a.level > b.level ? -1 : 1)[0].level) {
-      const onCooldown = await throttleCommand(userId, cmd)
-      if (typeof onCooldown === 'string') {
-        return channel.send(onCooldown.replace('{{user}}', `${member.toString()}`))
-      }
-    }
-    log(`${member.user.tag} (${permissionName}) ran command ${cmd.help.name}`, 'cmd')
-    cmd.run({ client, message, guildSettings, args })
-  }
+    interaction.editReply({
+      embeds: [embed],
+      ephemeral: true
+    })
+    return false
+  } else return userPermLevel
 }
 
 // Defined client & user permissions are validated
@@ -106,7 +100,10 @@ module.exports.validatePermissions = (permissions) => {
   return invalidPerms
 }
 
-module.exports.hasChannelPerm = (userId, channel, perm) => channel.permissionsFor(userId) && channel.permissionsFor(userId).has(perm)
+module.exports.hasChannelPerm = (userId, channel, perm) => {
+  if (!validPermissions.includes(perm)) throw new TypeError('Invalid discord permission provided')
+  return channel.permissionsFor(userId) && channel.permissionsFor(userId).has(perm)
+}
 
 const validPermissions = [
   'ADMINISTRATOR',
@@ -128,6 +125,7 @@ const validPermissions = [
   'READ_MESSAGE_HISTORY',
   'MENTION_EVERYONE',
   'USE_EXTERNAL_EMOJIS',
+  'USE_EXTERNAL_STICKERS',
   'VIEW_GUILD_INSIGHTS',
   'CONNECT',
   'SPEAK',
@@ -139,8 +137,8 @@ const validPermissions = [
   'MANAGE_NICKNAMES',
   'MANAGE_ROLES',
   'MANAGE_WEBHOOKS',
-  'MANAGE_EMOJIS',
-  'USE_APPLICATION_COMMANDS',
+  'MANAGE_EMOJIS_AND_STICKERS',
+  'USE_SLASH_COMMANDS',
   'REQUEST_TO_SPEAK',
   'MANAGE_THREADS',
   'USE_PUBLIC_THREADS',

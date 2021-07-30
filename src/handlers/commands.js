@@ -3,38 +3,31 @@ const { getFiles } = require('../tools')
 const { validatePermissions, permLevels } = require('./permissions')
 const commandPaths = getFiles(process.env.COMMANDS_PATH, '.js')
 
-module.exports.registerCommands = (client, counter = 0) => {
+module.exports.validateCommands = (client, counter = 0) => {
+  console.log('\nValidating Commands:')
   client.commands = new Collection()
-  client.aliases = new Collection()
-  console.log('Initializing Commands:')
   for (const path of commandPaths) {
     const cmd = require(path)
     const res = validateCommand(client, cmd, path)
     counter++
-    client.commands.set(cmd.help.name, cmd)
-    cmd.config.aliases.forEach(alias => client.aliases.set(alias, cmd.help.name))
+    client.commands.set(cmd.slash.name, cmd)
     console.log(res)
   }
-  console.log('Finished initializing commands!\n')
+  console.log('Finished Validating commands!\n')
 }
 
 module.exports.loadSlashCommands = async (client) => {
   const { application } = client
   const { commands } = application
   const globalCommands = await commands.fetch()
-  const testServer = client.guilds.cache.get(process.env.SLASH_CMD_TEST_SERVER_ID)
-
-  // Delete all your slash commands by calling:
-  // commands.set([])
-  // testServer.commands.set([])
+  const testServer = client.guilds.cache.get(client.json.config.ids.testServer)
 
   for await (const path of commandPaths) {
     const cmd = require(path)
     const { slash } = cmd
-    if (!slash) continue
     const applicationCommandData = {
-      name: cmd.help.name,
-      description: cmd.help.shortDescription,
+      name: slash.name,
+      description: slash.description,
       options: (
         Array.isArray(slash.options)
           ? slash.options
@@ -47,38 +40,33 @@ module.exports.loadSlashCommands = async (client) => {
       const allTestServerCommands = await testServer.commands.fetch()
       testCommand = allTestServerCommands.find((e) => (
         e.client.user.id === client.user.id
-        && e.name === cmd.help.name
+        && e.name === slash.name
       ))
     }
 
-    const globalCommand = globalCommands.find((e) => e.name === cmd.help.name && e.guildId === null)
+    const globalCommand = globalCommands.find((e) => e.name === slash.name && e.guildId === null)
 
     if (slash.enabled === false) {
-      console.log(`Disabling Slash Command: ${cmd.help.name}`)
+      console.log(`Disabling Slash Command: ${slash.name}`)
       try {
         if (globalCommand) commands.delete(globalCommand) && console.log('    G Disabled global command')
         if (testCommand && testServer) testServer.commands.delete(testCommand) && console.log('    T Disabled test command')
-        // client.guilds.cache.forEach(async (guild) => {
-        //   const guildCmds = await guild.commands.fetch()
-        //   const guildClientCmd = guildCmds.find((e) => e.name === cmd.help.name && e.client.user.id === client.user.id)
-        //   if (guildClientCmd) guild.commands.delete(guildClientCmd.id) && console.log(`    S Deleted server specific command for ${guild.name}`)
-        // })
-        for (const entry of client.guilds.cache.filter((guild) => guild.id !== process.env.SLASH_CMD_TEST_SERVER_ID)) {
+        for (const entry of client.guilds.cache.filter((guild) => guild.id !== client.json.config.ids.testServer)) {
           const guild = entry[1]
           const guildCmds = await guild.commands.fetch()
-          const guildClientCmd = guildCmds.find((e) => e.name === cmd.help.name && e.client.user.id === client.user.id)
+          const guildClientCmd = guildCmds.find((e) => e.name === slash.name && e.client.user.id === client.user.id)
           if (guildClientCmd) guild.commands.delete(guildClientCmd.id) && console.log(`    S Disabled server specific command for <${guild.name}>`)
         }
       } catch (err) {
-        return console.log(`Error encountered while disabling slash command ${cmd.help.name}\n${err.stack || err}`)
+        return console.log(`Error encountered while disabling slash command ${slash.name}\n${err.stack || err}`)
       }
-      console.log(`Successfully Disabled: ${cmd.help.name}\n`)
+      console.log(`Successfully Disabled: ${slash.name}\n`)
       continue
     }
 
     if (slash.reload !== true) continue
 
-    console.log(`Reloading Slash Command: ${cmd.help.name}`)
+    console.log(`Reloading Slash Command: ${slash.name}`)
 
     if (slash.globalCommand === true) {
       if (globalCommand) commands.edit(globalCommand, applicationCommandData) && console.log('    G Edited global command with new data')
@@ -93,22 +81,22 @@ module.exports.loadSlashCommands = async (client) => {
     }
 
     if (Array.isArray(slash.serverIds)) {
-      for (const entry of client.guilds.cache.filter((guild) => !slash.serverIds.includes(guild.id) && guild.id !== process.env.SLASH_CMD_TEST_SERVER_ID)) {
+      for (const entry of client.guilds.cache.filter((guild) => !slash.serverIds.includes(guild.id) && guild.id !== client.json.config.ids.testServer)) {
         const guild = entry[1]
         const guildCmds = await guild.commands.fetch()
-        const guildClientCmd = guildCmds.find((e) => e.name === cmd.help.name && e.client.user.id === client.user.id)
+        const guildClientCmd = guildCmds.find((e) => e.name === slash.name && e.client.user.id === client.user.id)
         if (guildClientCmd) guild.commands.delete(guildClientCmd.id) && console.log(`    S Deleted server specific command for <${guild.name}>`)
       }
       for (const serverId of slash.serverIds) {
         const guild = client.guilds.cache.get(serverId)
-        if (!guild || guild.id === process.env.SLASH_CMD_TEST_SERVER_ID) continue
+        if (!guild || guild.id === client.json.config.ids.testServer) continue
         const guildCmds = await guild.commands.fetch()
-        const guildClientCmd = guildCmds.find((e) => e.name === cmd.help.name && e.client.user.id === client.user.id)
+        const guildClientCmd = guildCmds.find((e) => e.name === slash.name && e.client.user.id === client.user.id)
         if (!guildClientCmd) guild.commands.create(applicationCommandData) && console.log(`    S Created server specific command for <${guild.name}>`)
         else guild.commands.edit(guildClientCmd, applicationCommandData) && console.log(`    S Edited server specific command for <${guild.name}>`)
       }
     }
-    console.log(`Finished Reloading: ${cmd.help.name}\n`)
+    console.log(`Finished Reloading: ${slash.name}\n`)
   }
 }
 
@@ -119,15 +107,12 @@ const validateCommand = (client, cmd, path) => {
   const shortPath = path.slice(
     path.indexOf(process.env.COMMANDS_PATH), path.length
   )
-  if (!cmd.help || !cmd.config || !cmd.run) {
+  const { config, slash } = cmd
+  if (!config || !cmd.run) {
     throw new Error(`Missing ${
-      cmd.help
-      ? (
-        cmd.config
-        ? 'exports.run'
-        : 'exports.config'
-      )
-      : 'exports.help'
+      config
+      ? 'exports.run'
+      : 'exports.config'
     }\n    at ${shortPath}`)
   }
 
@@ -135,44 +120,38 @@ const validateCommand = (client, cmd, path) => {
   const commandNameFromFile = splitPath[splitPath.length - 1].slice(0, -3)
   const commandCategoryFromFile = splitPath[splitPath.length - 2]
 
-  if (!cmd.help.name) cmd.help.name = commandNameFromFile
-  if (!cmd.help.category) cmd.help.category = cmd.help.category === 'commands' ? 'Uncategorized' : commandCategoryFromFile
-  if (!cmd.config.aliases) cmd.config.aliases = []
-  if (!cmd.config.clientPermissions) cmd.config.clientPermissions = []
-  if (!cmd.config.userPermissions) cmd.config.userPermissions = []
-  if (!cmd.config.throttling) cmd.config.throttling = false
-  if (!cmd.help.usage) cmd.help.usage = '{{command}}'
+  if (!slash.name) slash.name = commandNameFromFile
+  if (!slash.category) slash.category = slash.category === 'commands' ? 'Uncategorized' : commandCategoryFromFile
+  if (!config.clientPermissions) config.clientPermissions = []
+  if (!config.userPermissions) config.userPermissions = []
+  if (!config.throttling) config.throttling = false
 
-  const thisObj = { name: cmd.help.name, origin: path }
-  const check = tempCommands.find((e) => e.name === cmd.help.name)
-  if (check) throw new Error(`Duplicate Command: ${cmd.help.name} already registered!\nOriginal command: ${check.origin}\nRequested event: ${path}`)
+  const thisObj = { name: slash.name, origin: path }
+  const check = tempCommands.find((e) => e.name === slash.name)
+  if (check) throw new Error(`Duplicate Command: ${slash.name} already registered!\nOriginal command: ${check.origin}\nRequested event: ${path}`)
   tempCommands.push(thisObj)
   const logStr = `    ${
-      cmd.config.enabled === false
+      config.enabled === false
       ? 'X'
       : tempCommands.indexOf(thisObj) + 1
-    } ${cmd.help.name}: ${thisObj.origin.slice(
+    } ${slash.name}: ${thisObj.origin.slice(
       thisObj.origin
       .replace(/\\/g, '/')
       .indexOf(process.env.COMMANDS_PATH), thisObj.origin.length
     )}`
   if (
-    cmd.config
-      && cmd.config.enabled === false
+    config
+    && config.enabled === false
   ) {
     tempCommands.splice(tempCommands.indexOf(thisObj), 1)
     return logStr
   }
 
-  const helpExports = validateExports(helpTypes, cmd.help)
-  const confExports = validateExports(configTypes, cmd.config)
-  if (Array.isArray(helpExports)) problems = problems.concat(helpExports)
+  const confExports = validateExports(configTypes, config)
   if (Array.isArray(confExports)) problems = problems.concat(confExports)
 
-  if (cmd.slash) {
-    const slashExports = validateExports(slashTypes, cmd.slash)
-    if (Array.isArray(slashExports)) problems = problems.concat(slashExports)
-  }
+  const slashExports = validateExports(slashTypes, slash)
+  if (Array.isArray(slashExports)) problems = problems.concat(slashExports)
 
   const stopIfInvalid = () => {
     if (problems[0]) {
@@ -185,17 +164,14 @@ const validateCommand = (client, cmd, path) => {
   stopIfInvalid()
   // Additional check on those present properties afterwards
 
-  if (permLevels[cmd.config.permLevel] === undefined) problems.push(`Unsupported permission level: ${cmd.config.permLevel}`)
+  if (permLevels[config.permLevel] === undefined) problems.push(`Unsupported permission level: ${config.permLevel}`)
 
-  const invalidClientPerms = validatePermissions(cmd.config.clientPermissions)
-  const invalidUserPerms = validatePermissions(cmd.config.userPermissions)
+  const invalidClientPerms = validatePermissions(config.clientPermissions)
+  const invalidUserPerms = validatePermissions(config.userPermissions)
   if (invalidClientPerms[0]) invalidClientPerms.forEach((perm) => problems.push(`Invalid clientPermission: "${perm}"`))
   if (invalidUserPerms[0]) invalidUserPerms.forEach((perm) => problems.push(`Invalid userPermission: "${perm}"`))
 
-  cmd.config.aliases.forEach(alias => {
-    if (client.aliases.get(alias)) throw new Error(`Two commands or more commands have the same aliases: ${alias}\n    at: ${path}`)
-    client.aliases.set(alias, cmd.help.name)
-  })
+  if (slash.description.length === 0) throw new Error(`Provide a description for command: ${slash.name}\n    at: ${path}`)
 
   stopIfInvalid()
   counter = 0
@@ -204,7 +180,7 @@ const validateCommand = (client, cmd, path) => {
 
 let counter = 0
 const validateExports = (originalObj, targetObj) => {
-  const exports = 'exports.' + (counter === 0 ? 'help' : (counter === 1 ? 'config' : 'slash'))
+  const exports = 'exports.' + (counter === 0 ? 'config' : 'slash')
   const problems = []
   Object.entries(originalObj).forEach(([key, value]) => {
     const { throttling } = targetObj
@@ -233,19 +209,9 @@ const validateExports = (originalObj, targetObj) => {
   else return true
 }
 
-const helpTypes = {
-  name: '',
-  category: '',
-  shortDescription: '',
-  longDescription: '',
-  usage: '',
-  examples: 'array'
-}
-
 const configTypes = {
   enabled: true,
   required: true,
-  aliases: 'array',
   permLevel: '',
   clientPermissions: 'array',
   userPermissions: 'array',
@@ -253,9 +219,13 @@ const configTypes = {
 }
 
 const slashTypes = {
+  name: '',
+  category: '',
+  description: '',
   enabled: true,
   reload: true,
   globalCommand: true,
   testCommand: true,
-  serverIds: 'array'
+  serverIds: 'array',
+  options: 'array'
 }

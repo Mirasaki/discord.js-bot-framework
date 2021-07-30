@@ -5,16 +5,15 @@ const settingSchema = Schema({
   _guildId: { type: String, required: true },
   prefixes: { type: Array, default: ['!!'] },
   permissions: {
-    helper_role: { type: String, default: '' },
-    mod_role: { type: String, default: '' },
-    admin_role: { type: String, default: '' },
-    permission_notice: { type: Boolean, default: true }
+    modRole: { type: String, default: '' },
+    adminRole: { type: String, default: '' },
+    permissionNotice: { type: Boolean, default: true }
   },
   channels: {
-    mod_log_channel: { type: String, default: '' },
-    restrict_cmds_channel: { type: String, default: '' }
+    modLog: { type: String, default: '' },
+    restrictCmds: { type: String, default: '' }
   },
-  disabled_cmds: { type: Array, default: [] }
+  disabledCmds: { type: Array, default: [] }
 })
 
 const GuildModel = model('settings', settingSchema)

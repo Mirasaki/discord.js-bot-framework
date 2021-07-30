@@ -1,3 +1,6 @@
+const { getSettingsCache } = require('../src/mongo/settings')
+const config = require('../config/config.json')
+
 const specialPermissions = {
   support: [],
   admins: [],
@@ -14,16 +17,49 @@ module.exports = [
   {
     level: 1,
     name: 'Moderator',
-    hasLevel: (member, channel) => (
-      channel.permissionsFor(member.user.id)
-      && channel.permissionsFor(member.user.id).has(['KICK_MEMBERS', 'BAN_MEMBERS'])
-    )
+    hasLevel: async (member, channel) => {
+      const { guild } = member
+      const guildSettings = await getSettingsCache(guild.id)
+      const modRole = guild.roles.cache.get(guildSettings.permissions.modRole)
+      if (
+        (
+          channel.permissionsFor(member.id)
+          && channel.permissionsFor(member.id).has(['KICK_MEMBERS', 'BAN_MEMBERS'])
+        ) || (
+          modRole
+          && ((
+            member.roles && member.roles.cache.has(modRole.id)
+          ) || (
+            member._roles && member._roles.includes(modRole.id))
+          )
+        )
+      ) return true
+      return false
+    }
   },
 
   {
     level: 2,
     name: 'Administrator',
-    hasLevel: (member, channel) => channel.permissionsFor(member.user.id) && channel.permissionsFor(member.id).has('ADMINISTRATOR')
+    hasLevel: async (member, channel) => {
+      const { guild } = member
+      const guildSettings = await getSettingsCache(guild.id)
+      const adminRole = guild.roles.cache.get(guildSettings.permissions.adminRole)
+      if (
+        (
+          channel.permissionsFor(member.id)
+          && channel.permissionsFor(member.id).has('ADMINISTRATOR')
+        ) || (
+          adminRole
+          && ((
+            member.roles && member.roles.cache.has(adminRole.id)
+          ) || (
+            member._roles && member._roles.includes(adminRole.id))
+          )
+        )
+      ) return true
+      return false
+    }
   },
 
   {
@@ -53,6 +89,6 @@ module.exports = [
   {
     level: 7,
     name: 'Bot Owner',
-    hasLevel: (member) => process.env.OWNER_ID === member.user.id
+    hasLevel: (member) => config.ids.owner === member.user.id
   }
 ]

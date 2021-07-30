@@ -4,7 +4,7 @@ const { parseSnakeCaseArray, getTimeSince } = require('../../tools')
 
 module.exports = async (client, guild) => {
   if (!guild.available) return
-  const channel = client.channels.cache.get(process.env.JOIN_LEAVE_CHANNEL_ID)
+  const channel = client.channels.cache.get(client.json.config.ids.serverJoinLeaveChannel)
   if (!channel || channel.type !== 'GUILD_TEXT') return
   logger.info(`[GUILD REMOVE] ${guild.name} has removed the bot! Members: ${guild.memberCount}`)
   await channel.send({

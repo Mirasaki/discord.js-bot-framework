@@ -3,7 +3,7 @@ require('dotenv').config({
 })
 
 const { Client, Intents } = require('discord.js')
-const { registerCommands } = require('./handlers/commands.js')
+const { validateCommands } = require('./handlers/commands.js')
 const { initializeListeners } = require('./handlers/listeners.js')
 const { log } = require('./handlers/logger.js')
 const { getFiles } = require('./tools.js');
@@ -21,7 +21,7 @@ const { getFiles } = require('./tools.js');
     ],
     fetchAllMembers: true
   })
-  registerCommands(client)
+  validateCommands(client)
   initializeListeners(client)
   await require('./mongoConnection')()
   client.json = {}
@@ -29,7 +29,6 @@ const { getFiles } = require('./tools.js');
     path = path.replace(/\\/g, '/')
     client.json[path.slice(path.lastIndexOf('/') + 1, path.length - 5)] = require(path)
   }
-  console.log(client.json)
   log('Bound config/*.json to client.json', 'success')
   client.login(process.env.DISCORD_TOKEN)
 })()
