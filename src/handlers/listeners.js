@@ -1,4 +1,4 @@
-const { getFiles } = require('../tools')
+const { getFiles } = require('../utils/tools')
 
 module.exports.initializeListeners = (client, counter = 0) => {
   const loadedListeners = []

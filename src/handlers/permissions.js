@@ -1,7 +1,91 @@
 // https://discord.com/developers/docs/topics/permissions
-const { parseSnakeCaseArray } = require('../tools')
+const { parseSnakeCaseArray } = require('../utils/tools')
+const { Permissions } = require('discord.js')
+const { getSettingsCache } = require('../mongo/settings')
+const config = require('../../config/config.json')
 
-const permConfig = require('../../config/permissionLevels')
+const permConfig = [
+  {
+    level: 0,
+    name: 'User',
+    hasLevel: () => true
+  },
+
+  {
+    level: 1,
+    name: 'Moderator',
+    hasLevel: async (member, channel) => {
+      const { guild } = member
+      const guildSettings = await getSettingsCache(guild.id)
+      const modRole = guild.roles.cache.get(guildSettings.permissions.modRole)
+      return (
+        (
+          this.hasChannelPerms(member.id, channel, ['KICK_MEMBERS', 'BAN_MEMBERS']) === true
+        ) || (
+          modRole
+          && ((
+            member.roles && member.roles.cache.has(modRole.id)
+          ) || (
+            member._roles && member._roles.includes(modRole.id))
+          )
+        )
+      )
+    }
+  },
+
+  {
+    level: 2,
+    name: 'Administrator',
+    hasLevel: async (member, channel) => {
+      const { guild } = member
+      const guildSettings = await getSettingsCache(guild.id)
+      const adminRole = guild.roles.cache.get(guildSettings.permissions.adminRole)
+      return (
+        (
+          this.hasChannelPerms(member.id, channel, 'ADMINISTRATOR') === true
+        ) || (
+          adminRole
+          && ((
+            member.roles && member.roles.cache.has(adminRole.id)
+          ) || (
+            member._roles && member._roles.includes(adminRole.id))
+          )
+        )
+      )
+    }
+  },
+
+  {
+    level: 3,
+    name: 'Server Owner',
+    hasLevel: (member, channel) => channel.guild.ownerId === member.user.id
+  },
+
+  {
+    level: 4,
+    name: 'Bot Support',
+    hasLevel: (member) => config.permissions.support.includes(member.user.id)
+  },
+
+  {
+    level: 5,
+    name: 'Bot Administrator',
+    hasLevel: (member) => config.permissions.admins.includes(member.user.id)
+  },
+
+  {
+    level: 6,
+    name: 'Developer',
+    hasLevel: (member) => config.permissions.developers.includes(member.user.id)
+  },
+
+  {
+    level: 7,
+    name: 'Bot Owner',
+    hasLevel: (member) => config.permissions.owner === member.user.id
+  }
+]
+
 const permLevels = {}
 for (let i = 0; i < permConfig.length; i++) {
   const thisLevel = permConfig[i]
@@ -51,40 +135,34 @@ module.exports.checkCommandPermissions = async (client, member, channel, cmd, in
     return false
   }
 
-  // Checking for required client permissions
-  const clientPerms = { required: cmd.config.clientPermissions, missing: [] }
-  if (
-    clientPerms.required.length >= 1
-    && !this.hasChannelPerm(clientId, channel, 'ADMINISTRATOR')
-  ) for (const perm of clientPerms.required) if (!this.hasChannelPerm(clientId, channel, perm)) clientPerms.missing.push(perm)
-
-  // Checking for (optional) additional required user permissions
-  const userPerms = { required: cmd.config.userPermissions, missing: [] }
-  if (
-    userPerms.required.length >= 1
-    && !this.hasChannelPerm(userId, channel, 'ADMINISTRATOR')
-  ) for (const perm of userPerms.required) if (!this.hasChannelPerm(userId, channel, perm)) userPerms.missing.push(perm)
-
-  const valid = userPerms.missing.length < 1 && clientPerms.missing.length < 1
+  const clientPermissions = this.hasChannelPerms(clientId, channel, cmd.config.clientPermissions)
+  const userPermissions = this.hasChannelPerms(userId, channel, cmd.config.userPermissions)
+  const valid = (
+    (
+      this.hasChannelPerms(clientId, channel, 'ADMINISTRATOR') === true
+      || clientPermissions === true
+    ) || (
+      this.hasChannelPerms(userId, channel, 'ADMINISTRATOR') === true
+      || userPermissions === true
+    )
+  )
 
   if (!valid) {
-    if (clientPerms.missing.length >= 1) {
-      const { missing } = clientPerms
+    if (clientPermissions.length >= 1) {
       embed.fields.push({
-        name: `I lack the required permission${missing.length === 1 ? '' : 's'}:`,
-        value: `${parseSnakeCaseArray(missing)}`,
+        name: `I lack the required permission${clientPermissions.length === 1 ? '' : 's'}:`,
+        value: `${parseSnakeCaseArray(clientPermissions)}`,
         inline: true
       })
     }
-    if (userPerms.missing.length >= 1) {
-      const { missing } = userPerms
+    if (userPermissions.length >= 1) {
       embed.fields.push({
-        name: `You lack the required permission${missing.length === 1 ? '' : 's'}:`,
-        value: `${parseSnakeCaseArray(missing)}`,
+        name: `You lack the required permission${userPermissions.length === 1 ? '' : 's'}:`,
+        value: `${parseSnakeCaseArray(userPermissions)}`,
         inline: true
       })
     }
-    interaction.editReply({
+    interaction.reply({
       embeds: [embed],
       ephemeral: true
     })
@@ -92,55 +170,18 @@ module.exports.checkCommandPermissions = async (client, member, channel, cmd, in
   } else return userPermLevel
 }
 
-// Defined client & user permissions are validated
-// when loading/registering the command
 module.exports.validatePermissions = (permissions) => {
   const invalidPerms = []
-  for (const permission of permissions) if (!validPermissions.includes(permission)) invalidPerms.push(permission)
+  for (const permission of permissions) if (!Permissions.FLAGS[permission]) invalidPerms.push(permission)
   return invalidPerms
 }
 
-module.exports.hasChannelPerm = (userId, channel, perm) => {
-  if (!validPermissions.includes(perm)) throw new TypeError('Invalid discord permission provided')
-  return channel.permissionsFor(userId) && channel.permissionsFor(userId).has(perm)
+module.exports.hasChannelPerms = (userId, channel, permArray) => {
+  if (typeof permArray === 'string') permArray = [permArray]
+  const invalidPerms = this.validatePermissions(permArray)
+  if (invalidPerms[0]) throw new Error(`Invalid discord permissions were provided: ${invalidPerms}`)
+  if (!channel.permissionsFor(userId)) return permArray
+  const missing = permArray.filter((perm) => !channel.permissionsFor(userId).has(Permissions.FLAGS[perm]))
+  if (!missing[0]) return true
+  else return missing
 }
-
-const validPermissions = [
-  'ADMINISTRATOR',
-  'CREATE_INSTANT_INVITE',
-  'KICK_MEMBERS',
-  'BAN_MEMBERS',
-  'MANAGE_CHANNELS',
-  'MANAGE_GUILD',
-  'ADD_REACTIONS',
-  'VIEW_AUDIT_LOG',
-  'PRIORITY_SPEAKER',
-  'STREAM',
-  'VIEW_CHANNEL',
-  'SEND_MESSAGES',
-  'SEND_TTS_MESSAGES',
-  'MANAGE_MESSAGES',
-  'EMBED_LINKS',
-  'ATTACH_FILES',
-  'READ_MESSAGE_HISTORY',
-  'MENTION_EVERYONE',
-  'USE_EXTERNAL_EMOJIS',
-  'USE_EXTERNAL_STICKERS',
-  'VIEW_GUILD_INSIGHTS',
-  'CONNECT',
-  'SPEAK',
-  'MUTE_MEMBERS',
-  'DEAFEN_MEMBERS',
-  'MOVE_MEMBERS',
-  'USE_VAD',
-  'CHANGE_NICKNAME',
-  'MANAGE_NICKNAMES',
-  'MANAGE_ROLES',
-  'MANAGE_WEBHOOKS',
-  'MANAGE_EMOJIS_AND_STICKERS',
-  'USE_SLASH_COMMANDS',
-  'REQUEST_TO_SPEAK',
-  'MANAGE_THREADS',
-  'USE_PUBLIC_THREADS',
-  'USE_PRIVATE_THREADS'
-]

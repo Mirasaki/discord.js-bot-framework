@@ -1,10 +1,10 @@
 const { MessageEmbed } = require('discord.js')
-const { titleCase } = require('../../tools')
+const { titleCase } = require('../../utils/tools')
 const { permLevels } = require('../../handlers/permissions')
 
 exports.run = ({ client, interaction, guildSettings, args }) => {
-  const { channel, member } = message
-  const { permissionLevel } = message.member.perms
+  const { channel, member, guild } = interaction
+  const { permissionLevel } = member.perms
 
   if (!args[0]) {
     const authorCommands = client.commands.filter(cmd => permLevels[cmd.config.permLevel] <= permissionLevel).array()
@@ -26,77 +26,82 @@ exports.run = ({ client, interaction, guildSettings, args }) => {
       }
       embedText += `\`${command.slash.name}\` `
     })
-    return channel.send({
+    return interaction.reply({
       embeds: [
         new MessageEmbed()
           .setAuthor(client.user.username, client.user.avatarURL({ dynamic: true }) || client.extras.defaultImageLink)
-          .setThumbnail(message.guild.iconURL({ dynamic: true }))
+          .setThumbnail(guild.iconURL({ dynamic: true }))
           .setColor(client.json.colors.main)
           .setDescription(embedText)
-          .addField('Detailed Command Information', `<@!${client.user.id}> help <any command>`)
+          .addField('Detailed Command Information', '/help <any command>')
       ]
     })
   }
 
-  const commandName = args[0].toLowerCase()
+  const commandName = args[0].value.toLowerCase()
   const command = client.commands.get(commandName)
   if (!command) {
-    return channel.send({
+    return interaction.reply({
       content: 'That\'s not a valid command!'
     })
   }
-  const { help, config, slash } = command
+  const { config, slash } = command
   const { throttling } = config
   const fields = []
 
   if (
     permLevels[config.permLevel]
     > permissionLevel
-  ) return channel.send(`${member}, you don't have permission to use that command!`)
+  ) {
+    return interaction.reply({
+      content: `${member}, you don't have permission to use that command!`,
+      ephemeral: true
+    })
+  }
 
-  const helpEmbed = new MessageEmbed({ fields })
-    .setColor(client.json.colors.main)
-    .setAuthor(titleCase(slash.name))
-    .setDescription(`${slash.description}
-    \n**Category:** ${
-      slash.category
-    }
-    **Cooldown:** ${
-      throttling
-      ? `${
-        throttling.usages === 1
-          ? '1 time'
-          : `${throttling.usages} times`
-        } in ${
-          throttling.duration === 1
-          ? '1 second'
-          : `${throttling.duration} seconds`
-      }`
-      : 'No cooldown!'
-    }
-    **Slash Command:** ${
-      slash && slash.enabled && slash.global ? 'Yes' : 'No'
-    }
-    **Can Be Disabled:** ${
-      config.required ? 'Yes' : 'No'
-    }
-    
-    **Permissions:**
-    **Me:** ${
-      config.clientPermissions[0]
-      ? `\`${getPermString(config.clientPermissions, channel, client.user.id)}\``
-      : 'None required!'
-    }
-    **You:** ${
-      config.userPermissions[0]
-      ? `\`${getPermString(config.userPermissions, channel, member.id)}\``
-      : 'None required!'
-    }
-    `)
-    .setFooter('<>: Angle bracket notation means the option is required.\n[]: Square bracket notation means the option is optional.')
-
-  channel.send({
-    embeds: [helpEmbed]
+  interaction.reply({
+    embeds: [
+      new MessageEmbed({ fields })
+        .setColor(client.json.colors.main)
+        .setAuthor(titleCase(slash.name))
+        .setDescription(`${slash.description}
+          \n**Category:** ${
+            slash.category
+          }
+          **Cooldown:** ${
+            throttling
+            ? `${
+              throttling.usages === 1
+                ? '1 time'
+                : `${throttling.usages} times`
+              } in ${
+                throttling.duration === 1
+                ? '1 second'
+                : `${throttling.duration} seconds`
+            }`
+            : 'No cooldown!'
+          }
+          **Slash Command:** ${
+            slash && slash.enabled && slash.global ? 'Yes' : 'No'
+          }
+          **Can Be Disabled:** ${
+            config.required ? 'Yes' : 'No'
+          }
+          
+          **Permissions:**
+          **Me:** ${
+            config.clientPermissions[0]
+            ? `\`${getPermString(config.clientPermissions, channel, client.user.id)}\``
+            : 'None required!'
+          }
+          **You:** ${
+            config.userPermissions[0]
+            ? `\`${getPermString(config.userPermissions, channel, member.id)}\``
+            : 'None required!'
+          }
+        `)
+        .setFooter('<>: Angle bracket notation means the option is required.\n[]: Square bracket notation means the option is optional.')
+    ]
   })
 }
 
@@ -131,5 +136,12 @@ exports.slash = {
   globalCommand: false,
   testCommand: true,
   serverIds: [],
-  options: []
+  options: [
+    {
+      type: 3,
+      name: 'command',
+      required: false,
+      description: 'The command to receive information for - use /help without this argument to see all your options!'
+    }
+  ]
 }

@@ -1,9 +1,9 @@
 const { MessageEmbed } = require('discord.js')
 
 exports.run = async ({ client, interaction, guildSettings, args }) => {
-  const { member, channel } = message
-  const { permissionLevel, permissionName } = message.member.perms
-  channel.send({
+  const { member } = interaction
+  const { permissionLevel, permissionName } = member.perms
+  interaction.reply({
     embeds: [
       new MessageEmbed()
         .setColor('WHITE')

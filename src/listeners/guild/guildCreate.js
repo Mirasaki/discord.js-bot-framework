@@ -1,6 +1,6 @@
 const { MessageEmbed } = require('discord.js')
 const { logger } = require('../../handlers/logger')
-const { parseSnakeCaseArray, getTimeSince } = require('../../tools')
+const { parseSnakeCaseArray, getTimeSince } = require('../../utils/tools')
 
 module.exports = async (client, guild) => {
   if (!guild.available) return

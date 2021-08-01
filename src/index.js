@@ -6,7 +6,7 @@ const { Client, Intents } = require('discord.js')
 const { validateCommands } = require('./handlers/commands.js')
 const { initializeListeners } = require('./handlers/listeners.js')
 const { log } = require('./handlers/logger.js')
-const { getFiles } = require('./tools.js');
+const { getFiles } = require('./utils/tools.js');
 
 (async () => {
   const client = new Client({

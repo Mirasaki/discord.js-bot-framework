@@ -4,8 +4,13 @@
     "supportServer": "https://discord.gg/KfHFhGNPvz"
   },
   "ids": {
-    "owner": "290182686365188096",
     "testServer": "793894728847720468",
     "serverJoinLeaveChannel": "870182690064850984"
+  },
+  "permissions": {
+    "support": [],
+    "admins": [],
+    "developers": [],
+    "owner": "290182686365188096"
   }
 }

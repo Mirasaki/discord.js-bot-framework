@@ -1,10 +1,12 @@
-const { getPermissionLevel, hasChannelPerm } = require('../../handlers/permissions')
+const { getPermissionLevel, hasChannelPerms } = require('../../handlers/permissions')
 const { getSettingsCache } = require('../../mongo/settings')
 module.exports = async (client, interaction) => {
   let { member, channel, user } = interaction
   if (
-    !hasChannelPerm(client.user.id, interaction.channel, 'VIEW_CHANNEL')
-    || !hasChannelPerm(client.user.id, interaction.channel, 'SEND_MESSAGES')
+    hasChannelPerms(client.user.id, interaction.channel, [
+      'VIEW_CHANNEL',
+      'SEND_MESSAGES'
+    ]) !== true
   ) return
   const { guild } = interaction
   if (!guild || !guild.available) return

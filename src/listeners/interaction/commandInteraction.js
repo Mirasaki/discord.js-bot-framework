@@ -1,4 +1,4 @@
-const { hasChannelPerm, permConfig, checkCommandPermissions } = require('../../handlers/permissions')
+const { permConfig, checkCommandPermissions, hasChannelPerms } = require('../../handlers/permissions')
 const { throttleCommand } = require('../../mongo/throttling')
 const { log } = require('../../handlers/logger')
 
@@ -12,8 +12,7 @@ module.exports = async (client, interaction, guildSettings) => {
     // At the time of writing this, slash commands can be called
     // from a channel the client doesn't have access to
     // this will of course result in an error
-    || !hasChannelPerm(member.user.id, channel, 'VIEW_CHANNEL')
-    || !hasChannelPerm(member.user.id, channel, 'SEND_MESSAGES')
+    || hasChannelPerms(member.user.id, channel, ['VIEW_CHANNEL', 'SEND_MESSAGES']) !== true
   ) return
 
   // split at any amount of repeating spaces or \u200b

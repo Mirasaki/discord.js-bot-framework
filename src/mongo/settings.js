@@ -3,7 +3,6 @@ const TIME_IN_ONE_HOUR = 1000 * 60 * 60
 
 const settingSchema = Schema({
   _guildId: { type: String, required: true },
-  prefixes: { type: Array, default: ['!!'] },
   permissions: {
     modRole: { type: String, default: '' },
     adminRole: { type: String, default: '' },
@@ -19,14 +18,14 @@ const settingSchema = Schema({
 const GuildModel = model('settings', settingSchema)
 module.exports.GuildModel = GuildModel
 
-const settingsCache = new Map()
+module.exports.settingsCache = new Map()
 
 module.exports.getSettingsCache = async (guildId) => {
-  let data = settingsCache.get(guildId)
-  if (!settingsCache.has(guildId)) {
+  let data = this.settingsCache.get(guildId)
+  if (!this.settingsCache.has(guildId)) {
     const guildSettings = await getSettingsFromDB(guildId)
     data = guildSettings
-    settingsCache.set(guildId, data)
+    this.settingsCache.set(guildId, data)
   }
   cacheTimeout(guildId)
   return data
@@ -48,6 +47,6 @@ const getSettingsFromDB = async (_guildId) => {
 
 const cacheTimeout = (guildId) => {
   setTimeout(() => {
-    settingsCache.delete(guildId)
+    this.settingsCache.delete(guildId)
   }, TIME_IN_ONE_HOUR)
 }

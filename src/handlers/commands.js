@@ -1,5 +1,5 @@
 const { Collection } = require('discord.js')
-const { getFiles } = require('../tools')
+const { getFiles } = require('../utils/tools')
 const { validatePermissions, permLevels } = require('./permissions')
 const commandPaths = getFiles(process.env.COMMANDS_PATH, '.js')
 
@@ -171,7 +171,7 @@ const validateCommand = (client, cmd, path) => {
   if (invalidClientPerms[0]) invalidClientPerms.forEach((perm) => problems.push(`Invalid clientPermission: "${perm}"`))
   if (invalidUserPerms[0]) invalidUserPerms.forEach((perm) => problems.push(`Invalid userPermission: "${perm}"`))
 
-  if (slash.description.length === 0) throw new Error(`Provide a description for command: ${slash.name}\n    at: ${path}`)
+  if (slash.description.length === 0) problems.push('Invalid slash.description!')
 
   stopIfInvalid()
   counter = 0
