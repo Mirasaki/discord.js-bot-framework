@@ -1,216 +1,188 @@
 // https://discord.com/developers/docs/topics/permissions
+const { parseSnakeCaseArray } = require('../utils/tools')
+const { Permissions } = require('discord.js')
+const { getSettingsCache } = require('../mongo/settings')
+const config = require('../../config/config.json')
+const { stripIndents } = require('common-tags')
 
-const { getSettings } = require('../mongo/helpers/settings');
-const levelCache = {};
+const permConfig = [
+  {
+    level: 0,
+    name: 'User',
+    hasLevel: () => true
+  },
 
-module.exports.specialPermissions = {
-    support: [],
-    admins: [],
-    developers: ['290182686365188096']
-};
-
-module.exports.getLevelCache = () => {
-    checkLevelCache();
-    return levelCache;
-};
-
-module.exports.getPermissionLevel = async (message) => {
-
-    let permLevel = {
-        permissionLevel: 0,
-        permissionName: 'User'
-    };
-
-    const permOrder = permissionLevels.slice(0).sort((a, b) => a.level < b.level ? 1 : -1);
-
-    while (permOrder.length) {
-        const currentLevel = permOrder.shift();
-        if (await currentLevel.hasLevel(message)) {
-            permLevel = {
-                permissionLevel: currentLevel.level,
-                permissionName: currentLevel.name
-            };
-            break;
-        }
+  {
+    level: 1,
+    name: 'Moderator',
+    hasLevel: async (member, channel) => {
+      const { guild } = member
+      const guildSettings = await getSettingsCache(guild.id)
+      const modRole = guild.roles.cache.get(guildSettings.permissions.modRole)
+      return (
+        (
+          this.hasChannelPerms(member.id, channel, ['KICK_MEMBERS', 'BAN_MEMBERS']) === true
+        ) || (
+          modRole
+          && ((
+            member.roles && member.roles.cache.has(modRole.id)
+          ) || (
+            member._roles && member._roles.includes(modRole.id))
+          )
+        )
+      )
     }
+  },
 
-    return permLevel;
-
-};
-
-module.exports.checkPermissionLevel = async (message, cmd) => {
-    checkLevelCache();
-    const { permissionLevel, permissionName } = await this.getPermissionLevel(message);
-    const permLevel = {
-        permissionLevel,
-        permissionName,
-        willPass: permissionLevel < levelCache[cmd.config.permLevel] ? false : true
-    };
-    return permLevel;
-};
-
-module.exports.checkDiscordPermissions = (client, message, cmd) => {
-
-    let permissions = cmd.config.clientPermissions;
-    if (permissions.length && typeof permissions === 'string') permissions = [permissions];
-
-    let userPermissions = cmd.config.userPermissions;
-    if (userPermissions.length && typeof permissions === 'string') userPermissions = [userPermissions];
-
-    let botPermsAreValid = true;
-    let userPermsAreValid = true;
-
-    if (!message.guild.me.hasPermission('ADMINISTRATOR')) {
-        if (!message.channel.permissionsFor(client.user.id)) {
-            botPermsAreValid = permissions;
-        } else {
-            const missingBotPermissions = permissions.filter(perm => !message.channel.permissionsFor(client.user.id).has(perm));
-            if (missingBotPermissions.length >= 1) botPermsAreValid = missingBotPermissions;
-        }
+  {
+    level: 2,
+    name: 'Administrator',
+    hasLevel: async (member, channel) => {
+      const { guild } = member
+      const guildSettings = await getSettingsCache(guild.id)
+      const adminRole = guild.roles.cache.get(guildSettings.permissions.adminRole)
+      return (
+        (
+          this.hasChannelPerms(member.id, channel, 'ADMINISTRATOR') === true
+        ) || (
+          adminRole
+          && ((
+            member.roles && member.roles.cache.has(adminRole.id)
+          ) || (
+            member._roles && member._roles.includes(adminRole.id))
+          )
+        )
+      )
     }
+  },
 
-    if (!message.member.hasPermission('ADMINISTRATOR')) {
-        if (!message.channel.permissionsFor(message.author.id)) {
-            userPermsAreValid = userPermissions;
-        } else {
-            const missingUserPermissions = userPermissions.filter(perm => !message.channel.permissionsFor(message.author.id).has(perm));
-            if (missingUserPermissions.length >= 1) userPermsAreValid = missingUserPermissions;
-        }
+  {
+    level: 3,
+    name: 'Server Owner',
+    hasLevel: (member, channel) => channel.guild.ownerId === member.user.id
+  },
+
+  {
+    level: 4,
+    name: 'Bot Support',
+    hasLevel: (member) => config.permissions.support.includes(member.user.id)
+  },
+
+  {
+    level: 5,
+    name: 'Bot Administrator',
+    hasLevel: (member) => config.permissions.admins.includes(member.user.id)
+  },
+
+  {
+    level: 6,
+    name: 'Developer',
+    hasLevel: (member) => config.permissions.developers.includes(member.user.id)
+  },
+
+  {
+    level: 7,
+    name: 'Bot Owner',
+    hasLevel: (member) => config.permissions.owner === member.user.id
+  }
+]
+
+const permLevels = {}
+for (let i = 0; i < permConfig.length; i++) {
+  const thisLevel = permConfig[i]
+  permLevels[thisLevel.name] = thisLevel.level
+}
+module.exports.permConfig = permConfig
+module.exports.permLevels = permLevels
+
+module.exports.getPermissionLevel = async (member, channel) => {
+  const correctOrder = permConfig.sort((a, b) => a.level > b.level ? -1 : 1)
+  for (const currentLevel of correctOrder) {
+    if (await currentLevel.hasLevel(member, channel)) {
+      return {
+        permissionLevel: currentLevel.level,
+        permissionName: currentLevel.name
+      }
     }
+  }
+}
 
-    return {
-        missingBotPermissions: botPermsAreValid,
-        missingUserPermissions: userPermsAreValid,
-        willPass: typeof botPermsAreValid === 'boolean' && typeof userPermsAreValid === 'boolean' ? true : false
-    };
+module.exports.checkCommandPermissions = async (client, member, channel, cmd, interaction) => {
+  const clientId = client.user.id
+  const userId = member.user.id
+  const userPermLevel = await this.getPermissionLevel(member, channel)
+  const { permissionName, permissionLevel } = userPermLevel
+  const embed = {
+    color: 'RED',
+    title: `${client.json.emojis.response.error} There was a problem while using "/${cmd.slash.name}" in #${channel.name}`,
+    fields: []
+  }
 
-};
+  // Check for required command permission level
+  if (
+    permLevels[cmd.config.permLevel]
+    > permissionLevel
+  ) {
+    embed.description = stripIndents`${member}, you don't have the required permission level to use this command.
+    \nRequired permission level: __${permLevels[cmd.config.permLevel]}__ - **${
+      cmd.config.permLevel
+    }**\nYour permission level: __${permissionLevel}__ - **${
+      permissionName
+    }**`
+    interaction.reply({
+      embeds: [embed],
+      ephemeral: true
+    })
+    return false
+  }
 
-module.exports.validatePermissions = (permissions, name) => {
-    for (const permission of permissions) {
-        if (!validPermissions.includes(permission)) {
-            throw new Error(`Unknown permission node "${permission}" called in ${name}.js`);
-        }
+  const clientPermissions = this.hasChannelPerms(clientId, channel, cmd.config.clientPermissions)
+  const userPermissions = this.hasChannelPerms(userId, channel, cmd.config.userPermissions)
+  const valid = (
+    (
+      this.hasChannelPerms(clientId, channel, 'ADMINISTRATOR') === true
+      || clientPermissions === true
+    ) && (
+      this.hasChannelPerms(userId, channel, 'ADMINISTRATOR') === true
+      || userPermissions === true
+    )
+  )
+
+  if (!valid) {
+    if (clientPermissions.length >= 1) {
+      embed.fields.push({
+        name: `I lack the required permission${clientPermissions.length === 1 ? '' : 's'}:`,
+        value: `${parseSnakeCaseArray(clientPermissions)}`,
+        inline: true
+      })
     }
-};
-
-const checkLevelCache = () => {
-    if (!levelCache.size) {
-        for (let i = 0; i < permissionLevels.length; i++) {
-            const thisLevel = permissionLevels[i];
-            levelCache[thisLevel.name] = thisLevel.level;
-        }
+    if (userPermissions.length >= 1) {
+      embed.fields.push({
+        name: `You lack the required permission${userPermissions.length === 1 ? '' : 's'}:`,
+        value: `${parseSnakeCaseArray(userPermissions)}`,
+        inline: true
+      })
     }
-};
+    interaction.reply({
+      embeds: [embed],
+      ephemeral: true
+    })
+    return false
+  } else return userPermLevel
+}
 
-const permissionLevels = [
+module.exports.validatePermissions = (permissions) => {
+  const invalidPerms = []
+  for (const permission of permissions) if (!Permissions.FLAGS[permission]) invalidPerms.push(permission)
+  return invalidPerms
+}
 
-    {
-        level: 0,
-        name: 'User',
-        hasLevel: () => true
-    },
-
-    {
-        level: 1,
-        name: 'Helper',
-        hasLevel: async (message) => {
-            const guildSettings = await getSettings(message.guild.id);
-            const helperRole = message.guild.roles.cache.get(guildSettings.permissions.helper_role);
-            if (helperRole && message.member.roles.cache.has(helperRole.id)) return true;
-            return false;
-        }
-    },
-
-    {
-        level: 2,
-        name: 'Moderator',
-        hasLevel: async (message) => {
-            const guildSettings = await getSettings(message.guild.id);
-            const modRole = message.guild.roles.cache.get(guildSettings.permissions.mod_role);
-            if (modRole && message.member.roles.cache.has(modRole.id)) return true;
-            return false;
-        }
-    },
-
-    {
-        level: 3,
-        name: 'Administrator',
-        hasLevel: async (message) => {
-            if (message.member.hasPermission('ADMINISTRATOR')) return true;
-            const guildSettings = await getSettings(message.guild.id);
-            const adminRole = message.guild.roles.cache.get(guildSettings.permissions.admin_role);
-            if (adminRole && message.member.roles.cache.has(adminRole.id)) return true;
-            return false;
-        }
-    },
-
-    {
-        level: 4,
-        name: 'Server Owner',
-        hasLevel: (message) => {
-            if (!message.guild || !message.guild.owner || !message.guild.ownerID) return false;
-            if (message.author.id == message.guild.ownerID) return true;
-            return false;
-        }
-    },
-
-    {
-        level: 5,
-        name: 'Bot Support',
-        hasLevel: (message) => this.specialPermissions.support.includes(message.author.id)
-    },
-
-    {
-        level: 6,
-        name: 'Bot Administrator',
-        hasLevel: (message) => this.specialPermissions.admins.includes(message.author.id)
-    },
-
-    {
-        level: 7,
-        name: 'Developer',
-        hasLevel: (message) => this.specialPermissions.developers.includes(message.author.id)
-    },
-
-    {
-        level: 8,
-        name: 'Bot Owner',
-        hasLevel: (message) => message.author.id == process.env.OWNER_ID
-    }
-
-];
-
-const validPermissions = [
-    'ADMINISTRATOR',
-    'CREATE_INSTANT_INVITE',
-    'KICK_MEMBERS',
-    'BAN_MEMBERS',
-    'MANAGE_CHANNELS',
-    'MANAGE_GUILD',
-    'ADD_REACTIONS',
-    'VIEW_AUDIT_LOG',
-    'PRIORITY_SPEAKER',
-    'STREAM',
-    'VIEW_CHANNEL',
-    'SEND_MESSAGES',
-    'SEND_TTS_MESSAGES',
-    'MANAGE_MESSAGES',
-    'EMBED_LINKS',
-    'ATTACH_FILES',
-    'READ_MESSAGE_HISTORY',
-    'MENTION_EVERYONE',
-    'USE_EXTERNAL_EMOJIS',
-    'VIEW_GUILD_INSIGHTS',
-    'CONNECT',
-    'SPEAK',
-    'MUTE_MEMBERS',
-    'DEAFEN_MEMBERS',
-    'MOVE_MEMBERS',
-    'USE_VAD',
-    'CHANGE_NICKNAME',
-    'MANAGE_NICKNAMES',
-    'MANAGE_ROLES',
-    'MANAGE_WEBHOOKS',
-    'MANAGE_EMOJIS'
-];
+module.exports.hasChannelPerms = (userId, channel, permArray) => {
+  if (typeof permArray === 'string') permArray = [permArray]
+  const invalidPerms = this.validatePermissions(permArray)
+  if (invalidPerms[0]) throw new Error(`Invalid discord permissions were provided: ${invalidPerms}`)
+  if (!channel.permissionsFor(userId)) return permArray
+  const missing = permArray.filter((perm) => !channel.permissionsFor(userId).has(Permissions.FLAGS[perm]))
+  if (!missing[0]) return true
+  else return missing
+}

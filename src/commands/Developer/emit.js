@@ -1,160 +1,77 @@
-exports.run = async ({ client, message, args }) => {
+const { validEvents } = require('../../handlers/listeners')
 
-    const event = args[0];
+exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
+  if (!args[0]) {
+    return interaction.reply({
+      content: `${emojis.response.error} Include one of the available events!`,
+      ephemeral: true
+    })
+  }
 
-    switch (event) {
-        case 'channelcreate':
-            client.emit('channelCreate', message.channel);
-        break;
+  const { channel, guild, member, user } = interaction
+  const role = member.roles.cache.random() || null
+  const event = args[0].value
 
-        case 'channeldelete':
-            client.emit('channelDelete', message.channel);
-        break;
-
-        case 'channelupdate':
-            client.emit('channelUpdate', (message.channel, message.channel));
-        break;
-
-        case 'debug':
-            client.emit('debug', message.content);
-        break;
-
-        case 'error':
-            client.emit('error', message.content);
-        break;
-
-        case 'guildbanadd':
-            client.emit('guildBanAdd', message.author);
-        break;
-
-        case 'guildbanremove':
-            client.emit('guildBanRemove', message.author);
-        break;
-
-        case 'guildcreate':
-            client.emit('guildCreate', message.guild);
-        break;
-
-        case 'guilddelete':
-            client.emit('guildDelete', message.guild);
-        break;
-
-        case 'guildmemberadd':
-            client.emit('guildMemberAdd', message.member);
-        break;
-
-        case 'guildmemberremove':
-            client.emit('guildMemberRemove', message.member);
-        break;
-
-        case 'guildmemberupdate':
-            client.emit('guildMemberUpdate', message.member);
-        break;
-
-        case 'guildunavailable':
-            client.emit('guildUnavailable', message.guild);
-        break;
-
-        case 'guildupdate':
-            client.emit('guildUpdate', (message.guild, message.guild));
-        break;
-
-        case 'messagedelete':
-            client.emit('messageDelete', message);
-        break;
-
-        case 'messageupdate':
-            client.emit('messageUpdate', (message, message));
-        break;
-
-        case 'ready':
-            client.emit('ready');
-        break;
-
-        case 'rolecreate':
-            client.emit('roleCreate', message.member.roles.highest);
-        break;
-
-        case 'roledelete':
-            client.emit('roleDelete', message.member.roles.highest);
-        break;
-
-        case 'roleupdate':
-            client.emit('roleUpdate', (message.member.roles.highest, message.member.roles.cache.random()));
-        break;
-
-        case 'userupdate':
-            client.emit('userUpdate', message.author.user);
-        break;
-
-        case 'warn':
-            client.emit('warn', message.content);
-        break;
-
-        /*
-        case '':
-            client.emit('', );
-        break;
-        */
-
-        default:
-        return client.send('no', message, 'that\'s not a valid event to emit!');
+  const getObj = (str) => {
+    switch (str) {
+      case 'channel': return channel
+      case 'guild': return guild
+      case 'member': return member
+      case 'user': return user
+      case 'role': return role
     }
+  }
 
-    client.send('yes', message, `successfully emitted \`${event}\`!`);
-};
+  client.emit(event, getObj(args[0]), getObj(args[1]), getObj(args[2]))
+  interaction.reply({
+    content: `${emojis.response.success} Successfully emitted ${event}`,
+    ephemeral: true
+  })
+}
 
 exports.config = {
-    enabled: true,
-    required: false,
-    aliases: [],
-    permLevel: 'Developer',
-    cooldown: -1,
-    clientPermissions: [],
-    userPermissions: []
-};
+  enabled: true,
+  required: false,
+  permLevel: 'Developer',
+  clientPermissions: [],
+  userPermissions: []
+}
 
-exports.help = {
-    name: 'emit',
-    category: 'Developer',
-    shortDescription: 'Emit an event to the client.',
-    longDescription: 'Emit an event to the client. Useful for testing and troubleshooting.',
-    usage: '<command> <event>',
-    examples: ['emit guildMemberAdd', 'emit messagedelete']
-};
+const eventsData = []
+validEvents.filter((event) => (
+  !event.match(/messageReaction|interaction|application|channelPins/)
+)).forEach((event) => {
+  eventsData.push({
+    name: event.toLowerCase(),
+    value: event
+  })
+})
 
-exports.args = {
-    required: [
-        {
-            index: 0,
-            name: 'Event',
-            options: [
-                'channelcreate',
-                'channeldelete',
-                'channelupdate',
-                'debug',
-                'error',
-                'guildbanadd',
-                'guildbanremove',
-                'guildcreate',
-                'guilddelete',
-                'guildmemberadd',
-                'guildmemberremove',
-                'guildmemberupdate',
-                'guildunavailable',
-                'guildupdate',
-                'messagedelete',
-                'messageupdate',
-                'ready',
-                'rolecreate',
-                'roledelete',
-                'roleupdate',
-                'userupdate',
-                'warn'
-            ],
-            flexible: false
-        }
-    ],
-    optional: [],
-    flags: []
-};
+exports.slash = {
+  description: 'Emit a discord.js event to the client',
+  enabled: true,
+  reload: false,
+  globalCommand: false,
+  testCommand: true,
+  serverIds: [],
+  options: [
+    {
+      name: 'a-i',
+      description: 'Events (A-I) to emit to the client',
+      type: 3,
+      choices: eventsData.slice(0, 24)
+    },
+    {
+      name: 'j-t',
+      description: 'Events (J-T) to emit to the client',
+      type: 3,
+      choices: eventsData.slice(25, 49)
+    },
+    {
+      name: 't-z-custom',
+      description: 'Events (T-Z & Custom) to emit to the client',
+      type: 3,
+      choices: eventsData.slice(50, eventsData.length)
+    }
+  ]
+}

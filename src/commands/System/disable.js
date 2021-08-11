@@ -1,77 +1,157 @@
-const { deleteFromCache, getSettings } = require('../../mongo/helpers/settings');
-const { getLevelCache } = require('../../handlers/permissions');
-const levelCache = getLevelCache();
-const Discord = require('discord.js');
+const { MessageEmbed, MessageSelectMenu, MessageActionRow, MessageButton } = require('discord.js')
+const { permLevels } = require('../../handlers/permissions')
 
-exports.run = async ({ client, message, args, guildSettings }) => {
+exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
+  const { member, guild } = interaction
+  const disabledCommands = guildSettings.disabledCmds
 
-    const tagExecutor = message.author.toString();
-    const disabledCommands = guildSettings.disabled_cmds;
+  const options = []
+  client.commands.filter((cmd) =>
+    member.perms.permissionLevel >= permLevels[cmd.config.permLevel]
+    &&
+    cmd.config.required === false
+    &&
+    !disabledCommands.find(e => e === cmd.slash.name)
+  ).forEach((cmd) => {
+    options.push({
+      label: cmd.slash.name,
+      description: cmd.slash.description.length > 50 ? cmd.slash.description.slice(0, 46) + '...' : cmd.slash.description,
+      value: cmd.slash.name
+    })
+  })
 
-    if (args[0] === 'list') {
-        if (disabledCommands.length < 1) return client.send('no', message, 'no commands have been disabled!');
-        return message.channel.send({ embed: getEmbed(client, message, guildSettings) });
-    }
+  if (!options[0]) {
+    return interaction.reply({
+      content: `${emojis.animated.attention} You've disabled all the commands that **can** be disabled, re-enable some with **/**enable!`,
+      embeds: [getEmbed(client, guild, guildSettings)]
+    })
+  }
 
-    const command = args.shift().toLowerCase();
-    const cmd = client.commands.get(command) || client.commands.get(client.aliases.get(command));
+  interaction.reply({
+    embeds: [getEmbed(client, guild, guildSettings)],
+    components: [
+      new MessageActionRow()
+        .addComponents(
+          new MessageSelectMenu({
+            customId: 'disable_01',
+            placeholder: 'Select the commands to disable',
+            minValues: 1,
+            options
+          })
+        ),
+      new MessageActionRow()
+        .addComponents(
+          new MessageButton({
+            label: 'Stop',
+            customId: 'disable_02',
+            style: 'DANGER',
+            emoji: '🚫'
+          })
+        )
+    ]
+  })
+}
 
-    if (!cmd) return client.send('no', message, 'I couldn\'t find that command!');
-    if (cmd.config.required) return client.send('no', message, 'that command can\'t be disabled!');
-    if (disabledCommands.find(v => v === cmd.help.name)) return client.send('no', message, 'that command is already disabled!');
-    if (message.author.permissionLevel < levelCache[cmd.config.permLevel]) return client.send('no', message, 'your permission level isn\'t high enough to disable that command!');
-
-
-    try {
-
-        const settings = await getSettings(message.guild.id);
-        settings.disabled_cmds.push(cmd.help.name);
-        deleteFromCache(message.guild.id);
-        await settings.save();
-
-        message.channel.send(`${client.extras.yesIcon} ${tagExecutor}, added \`${cmd.help.name}\` to your disabled commands!`, { embed: getEmbed(client, message, settings) });
-
-    } catch(err) {
-        console.log(err);
-    }
-
-};
+const getEmbed = (client, guild, settings) => {
+  return new MessageEmbed()
+    .setColor(client.json.colors.main)
+    .setAuthor(`All disabled commands for ${guild.name}`, guild.iconURL({ dynamic: true }))
+    .setDescription(`${
+      settings.disabledCmds[0]
+      ? `\`${settings.disabledCmds.join('`, `')}\``
+      : `${client.json.emojis.response.error} None!`
+    }`)
+}
 
 exports.config = {
-    enabled: true,
-    required: true,
-    aliases: [],
-    permLevel: 'Administrator',
-    cooldown: -1,
-    clientPermissions: ['EMBED_LINKS'],
-    userPermissions: []
-};
+  enabled: true,
+  required: true,
+  permLevel: 'Administrator',
+  clientPermissions: [],
+  userPermissions: [],
+  throttling: {
+    usages: 2,
+    duration: 5
+  }
+}
 
-exports.help = {
-    name: 'disable',
-    category: 'System',
-    shortDescription: 'Disable specific commands.',
-    longDescription: 'Disable specific commands. This only applies to the server the command is called in.',
-    usage: '<disable> <command name>',
-    examples: ['disable debug']
-};
+exports.slash = {
+  description: 'Disable specific commands. This only applies to the server the command is called in.',
+  enabled: true,
+  reload: false,
+  globalCommand: true,
+  testCommand: false,
+  serverIds: [],
+  options: [],
+  listeners: [
+    {
+      customId: 'disable_01',
+      onClick: async function (client, interaction, guildSettings) {
+        const { values, guild, member } = interaction
+        const { disabledCmds } = guildSettings
+        values
+          .filter((cmdName) => !disabledCmds.includes(cmdName))
+          .forEach((cmdName) => disabledCmds.push(cmdName))
+        await guildSettings.save()
 
-exports.args = {
-    required: [
-        {
-            index: 0,
-            name: 'List / Command',
-            options: ['list', 'any of the commands name shown when you call the "help" command'],
-            flexible: true
+        const options = []
+        client.commands.filter((cmd) =>
+          member.perms.permissionLevel >= permLevels[cmd.config.permLevel]
+          &&
+          cmd.config.required === false
+          &&
+          !disabledCmds.find(e => e === cmd.slash.name)
+        ).forEach((cmd) => {
+          options.push({
+            label: cmd.slash.name,
+            description: cmd.slash.description.length > 50 ? cmd.slash.description.slice(0, 46) + '...' : cmd.slash.description,
+            value: cmd.slash.name
+          })
+        })
+
+        if (!options[0]) {
+          return interaction.update({
+            content: `${client.json.emojis.animated.attention} You've disabled all the commands that **can** be disabled, re-enable some with **/**enable!`,
+            embeds: [getEmbed(client, guild, guildSettings)],
+            components: []
+          })
         }
-    ],
-    optional: [],
-    flags: []
-};
 
-const getEmbed = (client, message, settings) => {
-    return new Discord.MessageEmbed()
-        .setColor(client.extras.primaryEmbedColor)
-        .setAuthor(`All disabled commands for ${message.guild.name}`, message.guild.iconURL({ dynamic: true }) || client.extras.defaultImageLink)
-        .setDescription(`\`${settings.disabled_cmds.join('`, `')}\``);
-};
+        interaction.update({
+          content: 'Click "Stop" to cancel editing',
+          embeds: [getEmbed(client, guild, guildSettings)],
+          components: [
+            new MessageActionRow()
+              .addComponents(
+                new MessageSelectMenu({
+                  customId: 'disable_01',
+                  placeholder: 'Select the commands to disable',
+                  minValues: 1,
+                  options
+                })
+              ),
+            new MessageActionRow()
+              .addComponents(
+                new MessageButton({
+                  label: 'Stop',
+                  customId: 'disable_02',
+                  style: 'DANGER',
+                  emoji: '🚫'
+                })
+              )
+          ]
+        })
+      }
+    },
+    {
+      customId: 'disable_02',
+      onClick: async function (client, interaction, guildSettings) {
+        interaction.update({
+          content: `${client.json.emojis.animated.attention} This **/**disable menu has closed`,
+          embeds: [getEmbed(client, interaction.guild, guildSettings)],
+          components: []
+        })
+      }
+    }
+  ]
+}

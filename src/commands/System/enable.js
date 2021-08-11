@@ -1,61 +1,154 @@
-const { deleteFromCache, getSettings } = require('../../mongo/helpers/settings');
-const { getLevelCache } = require('../../handlers/permissions');
-const levelCache = getLevelCache();
+const { MessageEmbed, MessageSelectMenu, MessageActionRow, MessageButton } = require('discord.js')
+const { permLevels } = require('../../handlers/permissions')
 
-exports.run = async ({ client, message, args, guildSettings }) => {
-    const command = args.shift().toLowerCase();
-    const cmd = client.commands.get(command) || client.commands.get(client.aliases.get(command));
-    if (!cmd) return client.send('no', message, 'I couldn\'t find that command!');
+exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
+  const { member, guild } = interaction
+  const disabledCommands = guildSettings.disabledCmds
 
-    const disabledCommands = guildSettings.disabled_cmds;
+  const options = []
+  client.commands.filter((cmd) =>
+    member.perms.permissionLevel >= permLevels[cmd.config.permLevel]
+    &&
+    cmd.config.required === false
+    &&
+    disabledCommands.find(e => e === cmd.slash.name)
+  ).forEach((cmd) => {
+    options.push({
+      label: cmd.slash.name,
+      description: cmd.slash.description.length > 50 ? cmd.slash.description.slice(0, 46) + '...' : cmd.slash.description,
+      value: cmd.slash.name
+    })
+  })
 
-    if (!disabledCommands.find(v => v === cmd.help.name)) return client.send('no', message, 'that command isn\'t disabled!');
-    if (message.author.permLevel < levelCache[cmd.config.permLevel]) return client.send('no', message, 'your permission level isn\'t high enough to re-enable that command!');
+  if (!options[0]) {
+    return interaction.reply({
+      content: `${emojis.animated.attention} No commands are currently disabled!`
+    })
+  }
 
-    try {
+  interaction.reply({
+    embeds: [getEmbed(client, guild, guildSettings)],
+    components: [
+      new MessageActionRow()
+        .addComponents(
+          new MessageSelectMenu({
+            customId: 'enable_01',
+            placeholder: 'Select the commands to enable',
+            minValues: 1,
+            options
+          })
+        ),
+      new MessageActionRow()
+        .addComponents(
+          new MessageButton({
+            label: 'Stop',
+            customId: 'enable_02',
+            style: 'DANGER',
+            emoji: '🚫'
+          })
+        )
+    ]
+  })
+}
 
-        const settings = await getSettings(message.guild.id);
-        const index = disabledCommands.indexOf(cmd.help.name);
-        settings.disabled_cmds.splice(index, 1);
-        deleteFromCache(message.guild.id);
-        await settings.save();
-
-        client.send('yes', message, `re-enabled command \`${cmd.help.name}\`!`);
-
-    } catch(err) {
-        console.log(err);
-    }
-
-};
+const getEmbed = (client, guild, settings) => {
+  return new MessageEmbed()
+    .setColor(client.json.colors.main)
+    .setAuthor(`All disabled commands for ${guild.name}`, guild.iconURL({ dynamic: true }))
+    .setDescription(`${
+      settings.disabledCmds[0]
+      ? `\`${settings.disabledCmds.join('`, `')}\``
+      : `${client.json.emojis.response.error} None!`
+    }`)
+}
 
 exports.config = {
-    enabled: true,
-    required: true,
-    aliases: [],
-    permLevel: 'Administrator',
-    cooldown: -1,
-    clientPermissions: [],
-    userPermissions: []
-};
+  enabled: true,
+  required: true,
+  permLevel: 'Administrator',
+  clientPermissions: [],
+  userPermissions: [],
+  throttling: {
+    usages: 2,
+    duration: 5
+  }
+}
 
-exports.help = {
-    name: 'enable',
-    category: 'System',
-    shortDescription: 'Re-enable specific commands.',
-    longDescription: 'Re-enable specific commands you have previously disabled. This only applies to the server the command is called in.',
-    usage: '<enable> <command name>',
-    examples: ['enable debug']
-};
+exports.slash = {
+  description: 'Enable previously disabled commands. This only applies to the server the command is called in.',
+  enabled: true,
+  reload: false,
+  globalCommand: true,
+  testCommand: false,
+  serverIds: [],
+  options: [],
+  listeners: [
+    {
+      customId: 'enable_01',
+      onClick: async function (client, interaction, guildSettings) {
+        const { values, member, guild } = interaction
+        const { disabledCmds } = guildSettings
+        values
+          .filter((cmdName) => disabledCmds.includes(cmdName))
+          .forEach((cmdName) => disabledCmds.splice(disabledCmds.indexOf(cmdName), 1))
+        await guildSettings.save()
+        const options = []
+        client.commands.filter((cmd) =>
+          member.perms.permissionLevel >= permLevels[cmd.config.permLevel]
+          &&
+          cmd.config.required === false
+          &&
+          disabledCmds.find(e => e === cmd.slash.name)
+        ).forEach((cmd) => {
+          options.push({
+            label: cmd.slash.name,
+            description: cmd.slash.description.length > 50 ? cmd.slash.description.slice(0, 46) + '...' : cmd.slash.description,
+            value: cmd.slash.name
+          })
+        })
 
-exports.args = {
-    required: [
-        {
-            index: 0,
-            name: 'Command',
-            options: ['Any command name'],
-            flexible: true
+        if (!options[0]) {
+          return interaction.update({
+            content: `${client.json.emojis.animated.attention} No commands are currently disabled!`,
+            embeds: [getEmbed(client, guild, guildSettings)],
+            components: []
+          })
         }
-    ],
-    optional: [],
-    flags: []
-};
+
+        interaction.update({
+          embeds: [getEmbed(client, guild, guildSettings)],
+          components: [
+            new MessageActionRow()
+              .addComponents(
+                new MessageSelectMenu({
+                  customId: 'enable_01',
+                  placeholder: 'Select the commands to enable',
+                  minValues: 1,
+                  options
+                })
+              ),
+            new MessageActionRow()
+              .addComponents(
+                new MessageButton({
+                  label: 'Stop',
+                  customId: 'enable_02',
+                  style: 'DANGER',
+                  emoji: '🚫'
+                })
+              )
+          ]
+        })
+      }
+    },
+    {
+      customId: 'enable_02',
+      onClick: async function (client, interaction, guildSettings) {
+        interaction.update({
+          content: `${client.json.emojis.animated.attention} This **/**enable menu has closed`,
+          embeds: [getEmbed(client, interaction.guild, guildSettings)],
+          components: []
+        })
+      }
+    }
+  ]
+}

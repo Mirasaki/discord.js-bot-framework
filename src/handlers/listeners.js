@@ -1,26 +1,104 @@
-const { success } = require('log-symbols');
-const { readdirSync } = require('fs');
-const { sep } = require('path');
+const { getFiles } = require('../utils/tools')
 
-module.exports.loadListeners = async (client, counter = 0) => {
-    console.log('\nStart initializing LISTENERS');
-    const dir = './src/listeners';
+module.exports.initializeListeners = (client, counter = 0) => {
+  const loadedListeners = []
+  console.log('Initializing listeners:')
+  for (let path of getFiles(process.env.EVENTS_PATH, '.js')) {
+    path = path.replace(/\\/g, '/')
+    const event = require(path)
+    const eventName = path.slice(path.lastIndexOf('/') + 1, path.length - 3)
+    const check = loadedListeners.find((e) => e.name === eventName)
+    const thisObj = { name: eventName, origin: path }
+    if (!this.validEvents.includes(eventName)) throw new TypeError(`Invalid Event name provided at ${path}!`)
+    if (check) throw new Error(`Duplicate Event: ${eventName} already loaded/bound!\nOriginal event: ${check.origin}\nRequested event: ${path}`)
+    counter++
+    loadedListeners.push(thisObj)
+    client.on(eventName, (...received) => event(client, ...received))
+    console.log(`    ${loadedListeners.indexOf(thisObj) + 1} ${eventName}: ${
+      thisObj.origin.slice(
+        thisObj.origin
+        .indexOf(process.env.EVENTS_PATH
+      ), thisObj.origin.length
+    )}`)
+  }
+  console.log('Finished initializing listeners!\n')
+}
 
-    readdirSync(dir).filter(d => !d.startsWith('.') && !d.endsWith('.js'))
-        .forEach(entry => {
+module.exports.validEvents = [
+  'applicationCommandCreate',
+  'applicationCommandDelete',
+  'applicationCommandUpdate',
+  'channelCreate',
+  'channelDelete',
+  'channelPinsUpdate',
+  'channelUpdate',
+  'debug',
+  'emojicreate',
+  'emojiDelete',
+  'emojiUpdate',
+  'error',
+  'guildBanAdd',
+  'guildBanRemove',
+  'guildCreate',
+  'guildDelete',
+  'guildIntegrationsUpdate',
+  'guildMemberAdd',
+  'guildMemberAvailable',
+  'guildMemberRemove',
+  'guildMembersChunk',
+  'guildMemberUpdate',
+  'guildUnavailable',
+  'guildUpdate',
+  'interaction', // Deprecated
+  'interactionCreate',
+  'invalidated',
+  'invalidRequestWarning',
+  'inviteCreate',
+  'inviteDelete',
+  'message', // Deprecated
+  'messageCreate',
+  'messageDelete',
+  'messageDeleteBulk',
+  'messageReactionAdd',
+  'messageReactionRemove',
+  'messageReactionRemoveAll',
+  'messageReactionRemoveEmoji',
+  'messageUpdate',
+  'presenceUpdate',
+  'rateLimit',
+  'ready',
+  'roleCreate',
+  'roleDelete',
+  'roleUpdate',
+  'shardDisconnect',
+  'shardError',
+  'shardReady',
+  'shardReconnecting',
+  'shardResume',
+  'stageInstanceCreate',
+  'stageInstanceDelete',
+  'stageInstanceUpdate',
+  'stickerCreate',
+  'stickerDelete',
+  'stickerUpdate',
+  'threadCreate',
+  'threadDelete',
+  'threadListSync',
+  'threadMembersUpdate',
+  'threadMemberUpdate',
+  'threadUpdate',
+  'typingStart',
+  'userUpdate',
+  'voiceStateUpdate',
+  'warn',
+  'webhookUpdate',
 
-            const listeners = readdirSync(`${dir}${sep}${entry}${sep}`)
-                .filter(file => file.endsWith('.js') && !file.startsWith('.'));
+  /*
+    CUSTOM (non-discord.js)
+    LISTENERS
+  */
 
-            for (const file of listeners) {
-                const eventName = file.split('.')[0];
-                const event = require(`../listeners/${entry}/${file}`);
-                client.on(eventName, event.bind(null, client));
-                counter++;
-                console.log(`${success} Loaded event ${counter}: ${eventName}`);
-            }
-
-        });
-
-    console.log('Done initializing LISTENERS');
-};
+  'commandInteraction',
+  'componentInteraction',
+  'selectMenuInteraction'
+]

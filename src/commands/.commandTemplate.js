@@ -1,30 +1,36 @@
-exports.run = async ({ client, message, args, guildSettings }) => {
-    
-    //
-
-};
+exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
+  //
+}
 
 exports.config = {
-    enabled: null,
-    required: null,
-    aliases: [],
-    permLevel: '',
-    cooldown: -1,
-    clientPermissions: [],
-    userPermissions: []
-};
+  enabled: null,
+  required: null,
+  permLevel: '',
+  clientPermissions: [],
+  userPermissions: [],
+  throttling: {
+    usages: 1,
+    duration: 5
+  },
+  nsfw: null
+}
 
-exports.help = {
-    name: '',
-    category: '',
-    shortDescription: '',
-    longDescription: '',
-    usage: '<command>',
-    examples: []
-};
+exports.slash = {
+  name: '',
+  category: '',
+  description: '',
+  enabled: true,
+  reload: true,
+  globalCommand: false,
+  testCommand: true,
+  serverIds: [],
+  options: [],
+  listeners: [
+    {
+      customId: 'custom_id',
+      onClick: async function (client, interaction, guildSettings) {
 
-exports.args = {
-    required: [],
-    optional: [],
-    flags: []
-};
+      }
+    }
+  ]
+}

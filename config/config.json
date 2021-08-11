@@ -1,0 +1,16 @@
+{
+  "links": {
+    "botInvite": "https://discord.com/api/oauth2/authorize?client_id=869913459641421844&permissions=8&scope=bot%20applications.commands",
+    "supportServer": "https://discord.gg/KfHFhGNPvz"
+  },
+  "ids": {
+    "testServer": "793894728847720468",
+    "serverJoinLeaveChannel": "870182690064850984"
+  },
+  "permissions": {
+    "support": [],
+    "admins": [],
+    "developers": [],
+    "owner": "290182686365188096"
+  }
+}

@@ -1,58 +1,63 @@
-const { forceLoadCommand, forceUnloadCommand } = require('../../handlers/commands');
-exports.run = async ({ client, message, args }) => {
+const { reloadCommand } = require('../../handlers/commands')
 
-    const commandName = args[0].toLowerCase();
+exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
+  const commandName = args[0].value
+  const command = client.commands.get(commandName)
 
-    const command = client.commands.get(commandName) || client.commands.get(client.aliases.get(commandName));
+  if (!command) {
+    return interaction.reply({
+      content: `${emojis.response.error} That is not a valid command!`,
+      ephemeral: true
+    })
+  }
 
-    if (!command) {
-        return client.send('no', message, 'I couldn\'t find that command!');
-    }
-
-    try {
-        forceUnloadCommand(client, command.help.name);
-        forceLoadCommand(client, command.help.name);
-        if (client.commands.get(command.help.name)) client.send('yes', message, `successfully re-loaded \`${command.help.name}\`!`);
-        else client.send('no', message, `\`${command.help.name}\` has been globally disabled!`);
-    } catch(err) {
-        client.send('no', message, `could not reload \`${args[0].toLowerCase()}.js\`.\n\nClick to reveal error below:\n||${err.stack}||`);
-        return console.log(err.stack || err);
-    }
-
-};
+  try {
+    reloadCommand(client, command)
+    interaction.reply({
+      content: `${emojis.response.success} Successfully reloaded **${command.slash.name}**!`
+    })
+  } catch (err) {
+    interaction.reply({
+      content: `${emojis.response.error} An error has occured while re-loading **${command.slash.name}**, click to reveal:\n\n||${err.stack || err}||`,
+      ephemeral: true
+    })
+    console.log(err.stack || err)
+  }
+}
 
 exports.config = {
-    enabled: true,
-    required: true,
-    aliases: ['rl'],
-    permLevel: 'Developer',
-    cooldown: -1,
-    clientPermissions: [],
-    userPermissions: []
-};
+  enabled: true,
+  required: true,
+  permLevel: 'Developer',
+  clientPermissions: [],
+  userPermissions: [],
+  throttling: {
+    usages: 1,
+    duration: 5
+  }
+}
 
-exports.help = {
-    name: 'reload',
-    category: 'Developer',
-    shortDescription: 'Reloads a command that has been modified.',
-    longDescription: 'Reload a command that has been modified. Instead of having to reboot the client, this reloads the command individually.',
-    usage: 'reload <command name>',
-    examples: [
-        'reload help',
-        'rl h',
-        'rl help'
-    ]
-};
+exports.slash = {
+  description: 'Reload a command',
+  enabled: true,
+  reload: false,
+  globalCommand: false,
+  testCommand: true,
+  serverIds: [],
+  options: [
+    {
+      name: 'command',
+      description: 'The command to reload',
+      required: true,
+      type: 3
+    }
+  ],
+  listeners: [
+    {
+      customId: 'custom_id',
+      onClick: async function (client, interaction, guildSettings) {
 
-exports.args = {
-    required: [
-        {
-            index: 0,
-            name: 'Command',
-            options: ['Any command name', 'File name without it\'s extension'],
-            flexible: true
-        }
-    ],
-    optional: [],
-    flags: []
-};
+      }
+    }
+  ]
+}

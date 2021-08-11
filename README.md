@@ -1,6 +1,6 @@
 <div align="center">
 
-![JDB](src/assets/JDBWide.png)
+![JDB](assets/JDBWide.png)
 # discord.js-bot-framework
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/7090099b5a5d4a1c9bd83602b326fa82)](https://app.codacy.com/gh/Destinovant/discord.js-bot-framework?utm_source=github.com&utm_medium=referral&utm_content=Destinovant/discord.js-bot-framework&utm_campaign=Badge_Grade_Settings)

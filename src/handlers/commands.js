@@ -1,260 +1,254 @@
-const { readdirSync } = require('fs');
-const { sep } = require('path');
-const mainDirectory = './src/commands';
-const allCategories = readdirSync(mainDirectory).filter(e => !e.startsWith('.') && !e.endsWith('.js'));
+const { Collection } = require('discord.js')
+const { getFiles } = require('../utils/tools')
+const { validatePermissions, permLevels } = require('./permissions')
+const commandPaths = getFiles(process.env.COMMANDS_PATH, '.js')
+const tempCommands = []
 
-const { success, error, info } = require('log-symbols');
-const { Collection } = require('discord.js');
-const { getLevelCache } = require('../handlers/permissions');
-const { validatePermissions } = require('./permissions');
+module.exports.validateCommands = (client, counter = 0) => {
+  console.log('\nValidating Commands:')
+  client.commands = new Collection()
+  for (const path of commandPaths) {
+    const cmd = require(path)
+    const res = validateCommand(client, cmd, path)
+    counter++
+    client.commands.set(cmd.slash.name, cmd)
+    console.log(res)
+  }
+  console.log('Finished Validating commands!\n')
+}
 
-/* class CommandError extends Error {
-    constructor(message, commandName, path, ...params) {
-        super(...params);
-        this.message = message;
-        this.name = 'CommandError';
-        this.command = commandName;
-        this.path = path;
-        this.stack = false;
+module.exports.reloadCommand = (client, cmd) => {
+  const { config, slash } = cmd
+  const { path } = config
+  const check = tempCommands.find((e) => e.name === slash.name)
+  if (check) tempCommands.splice(tempCommands.indexOf(check), 1)
+  const module = require.cache[require.resolve(path)]
+  delete require.cache[require.resolve(path)]
+  for (let i = 0; i < module.children.length; i++) {
+    if (module.children[i] === module) {
+      module.children.splice(i, 1)
+      break
     }
-}*/
+  }
+  const newCmd = require(path)
+  validateCommand(client, newCmd, path)
+  client.commands.set(newCmd.slash.name, newCmd)
+}
 
-const commandError = (
-    message,
-    commandName,
-    path
-) => {
-    console.log(`${info} Loading: ${commandName}`);
-    console.error(`
-    Command Validation Error
-        at ${path}
+module.exports.loadSlashCommands = async (client) => {
+  const { application } = client
+  const { commands } = application
+  const globalCommands = await commands.fetch()
+  const testServer = client.guilds.cache.get(client.json.config.ids.testServer)
 
-    ${error} ${message}
-`);
-    process.exit(1);
-};
+  for await (const path of commandPaths) {
+    const cmd = require(path)
+    const { slash } = cmd
+    const applicationCommandData = {
+      name: slash.name,
+      description: slash.description,
+      options: (
+        Array.isArray(slash.options)
+          ? slash.options
+          : []
+      )
+    }
 
+    let testCommand
+    if (testServer) {
+      const allTestServerCommands = await testServer.commands.fetch()
+      testCommand = allTestServerCommands.find((e) => (
+        e.client.user.id === client.user.id
+        && e.name === slash.name
+      ))
+    }
 
-module.exports.loadCommands = (client, counter = 0) => {
-    client.commands = new Collection();
-    client.aliases = new Collection();
+    const globalCommand = globalCommands.find((e) => e.name === slash.name && e.guildId === null)
 
-    for(const categoryFolder of allCategories) {
-
-        console.log(`Start loading ${categoryFolder.toUpperCase()}`);
-
-        const commands = readdirSync(`${mainDirectory}${sep}${categoryFolder}${sep}`)
-            .filter(files => files.endsWith('.js') && !files.startsWith('.'));
-
-        for (const file of commands) {
-
-            const cmd = require(`../commands/${categoryFolder}/${file}`);
-
-            validateCommand(client, cmd, `src/commands/${categoryFolder}/${file}`);
-
-            if (cmd.config.enabled) {
-                client.commands.set(cmd.help.name, cmd);
-                counter++;
-                console.log(`${success} Loaded command ${counter}: ${cmd.help.name}.`);
-            } else {
-                console.log(`${error} ${cmd.help.name.toProperCase()} is currently disabled!`);
-            }
-
+    if (slash.enabled === false) {
+      console.log(`Disabling Slash Command: ${slash.name}`)
+      try {
+        if (globalCommand) commands.delete(globalCommand) && console.log('    G Disabled global command')
+        if (testCommand && testServer) testServer.commands.delete(testCommand) && console.log('    T Disabled test command')
+        for (const entry of client.guilds.cache.filter((guild) => guild.id !== client.json.config.ids.testServer)) {
+          const guild = entry[1]
+          const guildCmds = await guild.commands.fetch()
+          const guildClientCmd = guildCmds.find((e) => e.name === slash.name && e.client.user.id === client.user.id)
+          if (guildClientCmd) guild.commands.delete(guildClientCmd.id) && console.log(`    S Disabled server specific command for <${guild.name}>`)
         }
-
-        console.log(`Done loading ${categoryFolder.toUpperCase()}\n`);
-
+      } catch (err) {
+        return console.log(`Error encountered while disabling slash command ${slash.name}\n${err.stack || err}`)
+      }
+      console.log(`Successfully Disabled: ${slash.name}\n`)
+      continue
     }
 
-};
+    if (slash.reload !== true) continue
 
-module.exports.forceLoadCommand = (client, commandName, loaded = false) => {
+    console.log(`Reloading Slash Command: ${slash.name}`)
 
-    for(const categoryFolder of allCategories) {
+    if (slash.globalCommand === true) {
+      if (globalCommand) commands.edit(globalCommand, applicationCommandData) && console.log('    G Edited global command with new data')
+      else commands.create(applicationCommandData) && console.log('    G Created global command')
+    } else if (slash.globalCommand === false && globalCommand) commands.delete(globalCommand) && console.log('    G Deleted global command')
 
-        const commands = readdirSync(`${mainDirectory}${sep}${categoryFolder}${sep}`)
-            .filter(files => files.endsWith('.js') && !files.startsWith('.'));
-
-        if (commands.includes(commandName + '.js')) {
-
-            const path = `../commands/${categoryFolder}/${commandName}.js`;
-
-            delete require.cache[require.resolve(path)];
-            const cmd = require(path);
-
-            cmd.config.aliases.forEach(alias => {
-                client.aliases.delete(alias);
-            });
-
-            if (cmd.config.enabled) {
-                loaded = true;
-                validateCommand(client, cmd, `src/commands/${categoryFolder}/${commandName}`);
-                client.commands.set(cmd.help.name, cmd);
-                return true;
-            } else {
-                return false;
-            }
-
-        }
-
+    if (testServer) {
+      if (slash.testCommand === true) {
+        if (testCommand) testServer.commands.edit(testCommand, applicationCommandData) && console.log('    T Edited test command with new data')
+        else testServer.commands.create(applicationCommandData) && console.log('    T Created Test Command')
+      } else if (slash.testCommand === false && testCommand) testServer.commands.delete(testCommand) && console.log('    T Deleted test command')
     }
 
-    if (!loaded) return undefined;
-
-};
-
-module.exports.forceUnloadCommand = (client, commandName) => {
-
-    for(const categoryFolder of allCategories) {
-
-        const commands = readdirSync(`${mainDirectory}${sep}${categoryFolder}${sep}`)
-            .filter(files => files.endsWith('.js') && !files.startsWith('.'));
-
-        if (commands.includes(commandName + '.js')) {
-            const cmdPath = `../commands/${categoryFolder}/${commandName}.js`;
-            const cmd = require(`../commands/${categoryFolder}/${commandName}.js`);
-            cmd.config.aliases.forEach(alias => {
-                client.aliases.delete(alias);
-            });
-            delete require.cache[require.resolve(cmdPath)];
-            client.commands.delete(commandName);
-        }
-
+    if (Array.isArray(slash.serverIds)) {
+      for (const entry of client.guilds.cache.filter((guild) => !slash.serverIds.includes(guild.id) && guild.id !== client.json.config.ids.testServer)) {
+        const guild = entry[1]
+        const guildCmds = await guild.commands.fetch()
+        const guildClientCmd = guildCmds.find((e) => e.name === slash.name && e.client.user.id === client.user.id)
+        if (guildClientCmd) guild.commands.delete(guildClientCmd.id) && console.log(`    S Deleted server specific command for <${guild.name}>`)
+      }
+      for (const serverId of slash.serverIds) {
+        const guild = client.guilds.cache.get(serverId)
+        if (!guild || guild.id === client.json.config.ids.testServer) continue
+        const guildCmds = await guild.commands.fetch()
+        const guildClientCmd = guildCmds.find((e) => e.name === slash.name && e.client.user.id === client.user.id)
+        if (!guildClientCmd) guild.commands.create(applicationCommandData) && console.log(`    S Created server specific command for <${guild.name}>`)
+        else guild.commands.edit(guildClientCmd, applicationCommandData) && console.log(`    S Edited server specific command for <${guild.name}>`)
+      }
     }
+    console.log(`Finished Reloading: ${slash.name}\n`)
+  }
+}
 
-};
+const validateCommand = (client, cmd, path) => {
+  let problems = []
+  path = path.replace(/\\/g, '/')
+  const shortPath = path.slice(
+    path.indexOf(process.env.COMMANDS_PATH), path.length
+  )
+  const { config, slash } = cmd
+  if (!config || !cmd.run) {
+    throw new Error(`CommandExportsValidationError:\nMissing ${
+      config
+      ? 'exports.run'
+      : 'exports.config'
+    }\n    at ${shortPath}`)
+  }
 
-const validateCommand = (client, cmd, origin) => {
+  const splitPath = path.split('/')
+  const commandNameFromFile = splitPath[splitPath.length - 1].slice(0, -3)
+  const commandCategoryFromFile = splitPath[splitPath.length - 2]
 
-    if (!origin.replace('.js', '').endsWith(cmd.help.name)) commandError('Invalid command name, make sure your exports.help.name is the same as the file name without extension!', cmd.help.name, origin);
+  if (!slash.name) slash.name = commandNameFromFile
+  if (!slash.category) slash.category = slash.category === 'commands' ? 'Uncategorized' : commandCategoryFromFile
+  if (!slash.listeners) slash.listeners = []
+  if (!config.clientPermissions) config.clientPermissions = []
+  if (!config.userPermissions) config.userPermissions = []
+  if (!config.throttling) config.throttling = false
+  if (!config.nsfw) config.nsfw = false
+  config.path = path
 
-    const levels = getLevelCache();
+  const thisObj = { name: slash.name, origin: path }
+  const check = tempCommands.find((e) => e.name === slash.name)
 
-    if (levels[cmd.config.permLevel] === undefined) commandError('Unsupported permission level', cmd.help.name, origin);
+  if (check) throw new Error(`CommandExportsValidationError:\nDuplicate Command: ${slash.name} already registered!\nOriginal command: ${check.origin}\nRequested event: ${path}`)
+  tempCommands.push(thisObj)
+  const logStr = `    ${
+      config.enabled === false
+      ? 'X'
+      : tempCommands.indexOf(thisObj) + 1
+    } ${slash.name}: ${thisObj.origin.slice(
+      thisObj.origin
+      .indexOf(process.env.COMMANDS_PATH), thisObj.origin.length
+    )}`
+  if (
+    config
+    && config.enabled === false
+  ) {
+    tempCommands.splice(tempCommands.indexOf(thisObj), 1)
+    return logStr
+  }
 
-    if (!cmd.config) commandError('Missing config exports!', cmd.help.name, origin);
-    if (!cmd.help) commandError('Missing help exports!', cmd.help.name, origin);
-    if (!cmd.args) commandError('Missing args exports!', cmd.help.name, origin);
-    if (!cmd.args.optional) commandError('Missing args.optional export, please export as an empty array if none apply here!', cmd.help.name, origin);
-    if (!cmd.args.required) commandError('Missing args.required export, please export as an empty array if none apply here!', cmd.help.name, origin);
-    if (!cmd.args.flags) commandError('Missing args.flags export, please export as an empty array if none apply here!', cmd.help.name, origin);
+  const confExports = validateExports(configTypes, config)
+  if (Array.isArray(confExports)) problems = problems.concat(confExports)
 
-    const badTypes = checkExports(cmd.config, cmd.help, cmd.args);
+  const slashExports = validateExports(slashTypes, slash)
+  if (Array.isArray(slashExports)) problems = problems.concat(slashExports)
 
-    if (badTypes.length) commandError(`Invalid command exports:\n        ${badTypes.join('\n        ')}`, cmd.help.name, origin);
-
-    validatePermissions(cmd.config.clientPermissions, cmd.help.name);
-    validatePermissions(cmd.config.userPermissions, cmd.help.name);
-
-    if (client.commands.get(cmd.help.name)) commandError(`Two or more commands have the same name: ${cmd.help.name}`, cmd.help.name, origin);
-
-    cmd.config.aliases.forEach(alias => {
-        if (client.aliases.get(alias)) commandError(`Two commands or more commands have the same alias: ${alias}\n        1st occurrence: ${client.aliases.get(alias)}\n        2nd occurrence: ${cmd.help.name}`, cmd.help.name, origin);
-        else client.aliases.set(alias, cmd.help.name);
-    });
-
-    return true;
-
-};
-
-const checkExports = (config, help, args, wrongTypes = []) => {
-
-    Object.entries(configTypes).forEach(entry => { if (config[entry[0]] == undefined) wrongTypes.push(`You are missing the config property => config.${entry[0]}`); });
-
-    Object.entries(helpTypes).forEach(entry => { if (help[entry[0]] == undefined) wrongTypes.push(`You are missing the help property => help.${entry[0]}`); });
-
-    Object.entries(config).forEach(([key, value]) => {
-        if (!configTypes[key]) wrongTypes.push(`config.${key} -> property is not supported`);
-        if (configTypes[key] === 'array') Array.isArray(value) ? true : wrongTypes.push(`config.${key} -> expected an array, received ${typeof value}`);
-        else if (typeof value != configTypes[key]) wrongTypes.push(`config.${key} -> expected ${configTypes[key]}, received ${typeof value}`);
-    });
-
-    Object.entries(help).forEach(([key, value]) => {
-        if (!helpTypes[key]) wrongTypes.push(`help.${key} -> property is not supported`);
-        else if (helpTypes[key] === 'array') Array.isArray(value) ? true : wrongTypes.push(`help.${key} -> expected an array, received ${typeof value}`);
-        else if (typeof value != helpTypes[key]) wrongTypes.push(`help.${key} -> expected ${helpTypes[key]}, received ${typeof value}`);
-        else if (typeof value === 'string' && value.length < 1) wrongTypes.push(`help.${key} -> expected at least 1 character, received none`);
-    });
-
-    let i = 0;
-    if (args && args.required) {
-        Object.entries(args.required).forEach(obj => {
-            Object.entries(obj[1]).forEach(([key, value]) => {
-                if (!argTypes[key]) wrongTypes.push(`args.required[${i}].${key} -> property is not supported`);
-                else if (argTypes[key] === 'array') Array.isArray(value) ? true : wrongTypes.push(`args.required[${i}].${key} -> expected an array, received ${typeof value}`);
-                else if (typeof value != argTypes[key]) wrongTypes.push(`args.required[${i}].${key} -> expected ${argTypes[key]}, received ${typeof value}`);
-                else if (typeof value === 'string' && value.length < 1) wrongTypes.push(`args.required[${i}].${key} -> expected at least 1 character, received none`);
-            });
-            Object.entries(argTypes).forEach(entry => { if (obj[1][entry[0]] == undefined) wrongTypes.push(`args.required[${i}] => missing property => ${entry[0]}!`); });
-            if (!obj[1].flexible && (obj[1].options == undefined || !obj[1].options.length)) wrongTypes.push(`args.required[${i}].flexible = false, yet there are no supported options!`);
-            i++;
-        });
-
+  const stopIfInvalid = () => {
+    if (problems[0]) {
+      problems.push(`    at ${path}`)
+      throw new Error(`CommandExportsValidationError:\n${problems.join('\n')}`)
     }
+  }
 
-    i = 0;
-    if (args && args.optional) {
-        Object.entries(args.optional).forEach(obj => {
-            Object.entries(obj[1]).forEach(([key, value]) => {
-                if (!argTypes[key]) wrongTypes.push(`args.required[${i}].${key} -> property is not supported`);
-                else if (argTypes[key] === 'array') Array.isArray(value) ? true : wrongTypes.push(`args.required[${i}].${key} -> expected an array, received ${typeof value}`);
-                else if (typeof value != argTypes[key]) wrongTypes.push(`args.required[${i}].${key} -> expected ${argTypes[key]}, received ${typeof value}`);
-                else if (typeof value === 'string' && value.length < 1) wrongTypes.push(`args.required[${i}].${key} -> expected at least 1 character, received none`);
-            });
-            Object.entries(argTypes).forEach(entry => { if (obj[1][entry[0]] == undefined) wrongTypes.push(`args.optional[${i}] => missing property => ${entry[0]}!`); });
-            i++;
-        });
-    }
+  // Stop Initializing if not all the required properties/exports are present
+  stopIfInvalid()
+  // Additional check on those present properties afterwards
 
-    i = 0;
-    if (args && args.flags) {
-        Object.entries(args.flags).forEach(obj => {
-            Object.entries(obj[1]).forEach(([key, value]) => {
-                if (!flagTypes[key]) wrongTypes.push(`args.flags[${i}].${key} -> property is not supported`);
-                else if (flagTypes[key] === 'array') Array.isArray(value) ? true : wrongTypes.push(`args.flags[${i}].${key} -> expected an array, received ${typeof value}`);
-                else if (typeof value != flagTypes[key]) wrongTypes.push(`args.flags[${i}].${key} -> expected ${argTypes[key]}, received ${typeof value}`);
-                else if (typeof value === 'string' && value.length < 1) wrongTypes.push(`args.string[${i}].${key} -> expected at least 1 character, received none`);
-            });
-            Object.entries(flagTypes).forEach(entry => {
-                if (obj[1][entry[0]] == undefined) wrongTypes.push(`args.flags[${i}] => missing property => ${entry[0]}!`);
-            });
-            i++;
-        });
-    }
+  if (permLevels[config.permLevel] === undefined) problems.push(`Unsupported permission level: ${config.permLevel}`)
 
-    return wrongTypes.length ? wrongTypes : true;
+  const invalidClientPerms = validatePermissions(config.clientPermissions)
+  const invalidUserPerms = validatePermissions(config.userPermissions)
+  if (invalidClientPerms[0]) invalidClientPerms.forEach((perm) => problems.push(`Invalid clientPermission: "${perm}"`))
+  if (invalidUserPerms[0]) invalidUserPerms.forEach((perm) => problems.push(`Invalid userPermission: "${perm}"`))
 
-};
+  if (slash.description.length === 0) problems.push('Invalid slash.description!')
+
+  stopIfInvalid()
+  counter = 0
+  return logStr
+}
+
+let counter = 0
+const validateExports = (originalObj, targetObj) => {
+  const exports = 'exports.' + (counter === 0 ? 'config' : 'slash')
+  const problems = []
+  Object.entries(originalObj).forEach(([key, value]) => {
+    const { throttling } = targetObj
+    if (key === 'throttling' && targetObj[key] === false) return
+    if (
+      key === 'throttling'
+      && throttling
+      && throttling !== false
+      && (
+        !throttling.usages
+        || typeof throttling.usages !== 'number'
+        || throttling.usages <= 0
+        || !throttling.duration
+        || typeof throttling.duration !== 'number'
+        || throttling.duration <= 0
+      )
+    ) problems.push(`Invalid ${exports}.throttling property provided.\n    Valid example: throttling: { usages: 2, duration: 20 }`)
+    // We turn the eslint warning off because we only touch Objects with hardcoded keys
+    // eslint-disable-next-line no-prototype-builtins
+    else if (!targetObj.hasOwnProperty(key)) problems.push(`Missing ${exports} property <${key}> (type ${typeof value})`)
+    else if (value === 'array' && Array.isArray(targetObj[key]) === false) problems.push(`Wrong ${exports} type ${key}: expected array, received ${typeof targetObj[key]}`)
+    else if (value !== 'array' && typeof targetObj[key] !== typeof value) problems.push(`Wrong ${exports} type ${key}: expected ${typeof value} received ${typeof targetObj[key]}>`)
+  })
+  counter++
+  if (problems[0]) return problems
+  else return true
+}
 
 const configTypes = {
-    enabled: 'boolean',
-    required: 'boolean',
-    aliases: 'array',
-    permLevel: 'string',
-    cooldown: 'number',
-    clientPermissions: 'array',
-    userPermissions: 'array'
-};
+  enabled: true,
+  required: true,
+  permLevel: '',
+  clientPermissions: 'array',
+  userPermissions: 'array',
+  throttling: {},
+  nsfw: true
+}
 
-const helpTypes = {
-    name: 'string',
-    category: 'string',
-    shortDescription: 'string',
-    longDescription: 'string',
-    usage: 'string',
-    examples: 'array'
-};
-
-const argTypes = {
-    index: 'number',
-    name: 'string',
-    options: 'array',
-    flexible: 'boolean'
-};
-
-const flagTypes = {
-    flag: 'string',
-    result: 'string',
-    permLevel: 'string',
-    permissions: 'array'
-};
+const slashTypes = {
+  name: '',
+  category: '',
+  description: '',
+  enabled: true,
+  reload: true,
+  globalCommand: true,
+  testCommand: true,
+  serverIds: 'array',
+  options: 'array',
+  listeners: []
+}

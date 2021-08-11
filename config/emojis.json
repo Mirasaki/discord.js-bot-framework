@@ -1,0 +1,84 @@
+{
+  "response": {
+    "success": "<:success:870270034591756359>",
+    "error": "<:error:870270034457526302>",
+    "unknown": "<:unknown:870270034050687007>"
+  },
+  "status": {
+    "online": "<:online:870272197611102239>",
+    "idle": "<:idle:870272197711761418>",
+    "dnd": "<:dnd:870272197724368996>",
+    "streaming": "<:streaming:870272197632086016>",
+    "offline": "<:status_offline:868895905741418496>"
+  },
+  "discord": {
+    "live": "<:discord:870270381511016468>",
+    "canary": "<:canary:870272198584193114>",
+    "clyde": "<:clyde:870272197556600832>",
+    "role": "<:roles:870270381242605619>",
+    "voice": "<:voice:870270381569765406>",
+    "message": "<:message:870270381678792754>",
+    "category": "<:category:870270381720739871>",
+    "text": "<:textChannel:870270381896900678>",
+    "download": "<:download:870272197338488893>",
+    "joined": "<:joined:870272197715968001>",
+    "update": "<:update:870272198173151232>",
+    "invite": "<:invite:870272198286393384>",
+    "language": "<:language:870272198370263100>",
+    "settings": "<:settings:870302569975664722>"
+  },
+  "connection": {
+    "good": "<:connectionGood:870272197455913032>",
+    "average": "<:connectionAverage:870272197502070805>",
+    "bad": "<:connectionBad:870272197476900885>"
+  },
+  "code": {
+    "added": "<:status_added:868895907079413800>",
+    "reworked": "<:status_average:868895906739683358>",
+    "removed": "<:status_removed:868895907037470770>"
+  },
+  "animated": {
+    "arrowLeft": "<a:arrowLeft:870272201734115430>",
+    "arrowRight": "<a:arrowRight:870272201465683978>",
+    "attention": "<a:attention:870272201104961576>",
+    "on": "<a:on:870272199511130173>",
+    "off": "<a:off:870272200098324500>",
+    "green": "<a:green:870272198357704725>",
+    "orange": "<a:orange:870272198324150293>",
+    "red": "<a:red:870272198307369011>",
+    "boost": "<a:boost:870272201557942332>"
+  },
+  "double": {
+    "system1": "<:system1:870302570256683058>",
+    "system2": "<:system2:870302570365718528>",
+    "bot1": "<:verifiedBot1:870287061964455976>",
+    "bot2": "<:verifiedBot2:870287062018961428>",
+    "welcome1": "<:welcome1:870306369029414912>",
+    "welcome2": "<:welcome2:870306369046188052>"
+  },
+  "blurple": {
+    "check": "<:blurpleCheck:870308181044236299>",
+    "cross": "<:blurpleCross:870308181421752340>",
+    "muted": "<:blurpleMuted:870308181119754262>",
+    "image": "<:blurpleImage:870308181182672917>",
+    "search": "<:blurpleSearch:870308181199421461>",
+    "heart": "<:blurpleHeart:870308181346238506>",
+    "link": "<:blurpleLink:870308181367210067>",
+    "support": "<:blurpleSupport:870308181404975204>",
+    "announcement": "<:blurpleAnnouncement:870308181421727824>",
+    "ticket": "<:blurpleTicket:870308181434306600>",
+    "gift": "<:blurpleGift:870308181438505010>",
+    "bell": "<:blurpleBell:870308181442723860>",
+    "leaveCall": "<:blurpleLeaveCall:870308181451108382>",
+    "chat": "<:blurpleChat:870308181463683152>",
+    "members": "<:blurpleMembers:870308181484634112>",
+    "verified": "<:blurpleVerified:870308181497249792>",
+    "moderator": "<:blurpleModerator:870308181501419540>",
+    "rules": "<:blurpleRules:870308181505638420>",
+    "partner": "<:blurplePartner:870308181514006558>",
+    "lock": "<:blurpleLock:870308181526605834>",
+    "star": "<:blurpleStar:870308181648224256>",
+    "camera": "<:blurpleCamera:870308181648244816>",
+    "delete": "<:blurpleDelete:870308181816000522>"
+  }
+}
