@@ -2,6 +2,7 @@ const { Collection } = require('discord.js')
 const { getFiles } = require('../utils/tools')
 const { validatePermissions, permLevels } = require('./permissions')
 const commandPaths = getFiles(process.env.COMMANDS_PATH, '.js')
+const tempCommands = []
 
 module.exports.validateCommands = (client, counter = 0) => {
   console.log('\nValidating Commands:')
@@ -14,6 +15,24 @@ module.exports.validateCommands = (client, counter = 0) => {
     console.log(res)
   }
   console.log('Finished Validating commands!\n')
+}
+
+module.exports.reloadCommand = (client, cmd) => {
+  const { config, slash } = cmd
+  const { path } = config
+  const check = tempCommands.find((e) => e.name === slash.name)
+  if (check) tempCommands.splice(tempCommands.indexOf(check), 1)
+  const module = require.cache[require.resolve(path)]
+  delete require.cache[require.resolve(path)]
+  for (let i = 0; i < module.children.length; i++) {
+    if (module.children[i] === module) {
+      module.children.splice(i, 1)
+      break
+    }
+  }
+  const newCmd = require(path)
+  validateCommand(client, newCmd, path)
+  client.commands.set(newCmd.slash.name, newCmd)
 }
 
 module.exports.loadSlashCommands = async (client) => {
@@ -100,7 +119,6 @@ module.exports.loadSlashCommands = async (client) => {
   }
 }
 
-const tempCommands = []
 const validateCommand = (client, cmd, path) => {
   let problems = []
   path = path.replace(/\\/g, '/')
@@ -109,7 +127,7 @@ const validateCommand = (client, cmd, path) => {
   )
   const { config, slash } = cmd
   if (!config || !cmd.run) {
-    throw new Error(`Missing ${
+    throw new Error(`CommandExportsValidationError:\nMissing ${
       config
       ? 'exports.run'
       : 'exports.config'
@@ -126,10 +144,13 @@ const validateCommand = (client, cmd, path) => {
   if (!config.clientPermissions) config.clientPermissions = []
   if (!config.userPermissions) config.userPermissions = []
   if (!config.throttling) config.throttling = false
+  if (!config.nsfw) config.nsfw = false
+  config.path = path
 
   const thisObj = { name: slash.name, origin: path }
   const check = tempCommands.find((e) => e.name === slash.name)
-  if (check) throw new Error(`Duplicate Command: ${slash.name} already registered!\nOriginal command: ${check.origin}\nRequested event: ${path}`)
+
+  if (check) throw new Error(`CommandExportsValidationError:\nDuplicate Command: ${slash.name} already registered!\nOriginal command: ${check.origin}\nRequested event: ${path}`)
   tempCommands.push(thisObj)
   const logStr = `    ${
       config.enabled === false
@@ -215,7 +236,8 @@ const configTypes = {
   permLevel: '',
   clientPermissions: 'array',
   userPermissions: 'array',
-  throttling: {}
+  throttling: {},
+  nsfw: true
 }
 
 const slashTypes = {

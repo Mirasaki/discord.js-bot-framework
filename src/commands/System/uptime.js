@@ -1,11 +1,13 @@
+const { stripIndents } = require('common-tags')
 const { version, MessageEmbed } = require('discord.js')
-exports.run = async ({ client, interaction, guildSettings, args }) => {
+exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
+  const latency = Math.round(client.ws.ping)
   interaction.reply({
     embeds: [
       new MessageEmbed()
         .setColor(client.json.colors.main)
         .setAuthor(client.user.tag, client.user.displayAvatarURL())
-        .setDescription(`**📊 I've been online for ${
+        .setDescription(stripIndents`**📊 I've been online for ${
           parseInt((client.uptime / (1000 * 60 * 60 * 24)) % 60, 10)
         } days, ${
           parseInt((client.uptime / (1000 * 60 * 60)) % 24, 10)
@@ -21,7 +23,13 @@ exports.run = async ({ client, interaction, guildSettings, args }) => {
         } MB](https://discord.gg/JPeue456eD)
         **Discord.js Version:** [v${version}](https://discord.js.org/#/docs/main/12.3.1/general/welcome)
         **Node Version:** [${process.version}](https://nodejs.org/docs/latest-v12.x/api/#)
-        **API Latency:** ${Math.round(client.ws.ping)}ms
+        **API Latency:** ${
+          latency <= 150
+          ? `${emojis.connection.good}`
+          : latency <= 250
+            ? `${emojis.connection.average}`
+            : `${emojis.connection.bad}`
+        } ${latency} ms
       `)
     ]
   })
@@ -29,22 +37,22 @@ exports.run = async ({ client, interaction, guildSettings, args }) => {
 
 exports.config = {
   enabled: true,
-  required: true,
+  required: false,
   permLevel: 'User',
   clientPermissions: [],
   userPermissions: [],
   throttling: {
     usages: 1,
-    duration: 5
+    duration: 30
   }
 }
 
 exports.slash = {
   description: 'Displays bot information',
   enabled: true,
-  reload: true,
-  globalCommand: false,
-  testCommand: true,
+  reload: false,
+  globalCommand: true,
+  testCommand: false,
   serverIds: [],
   options: [],
   listeners: []

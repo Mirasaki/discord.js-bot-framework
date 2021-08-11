@@ -27,9 +27,7 @@ module.exports.titleCase = (str) => {
 }
 
 module.exports.parseSnakeCaseArray = (arr) => {
-  console.log(arr)
   return arr.map((perm) => {
-    console.log(perm)
     perm = perm.toLowerCase().split(/[ _]+/)
     for (let i = 0; i < perm.length; i++) perm[i] = perm[i].charAt(0).toUpperCase() + perm[i].slice(1)
     return perm.join(' ')

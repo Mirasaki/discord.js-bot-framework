@@ -1,6 +1,6 @@
 const { MessageEmbed } = require('discord.js')
 
-exports.run = async ({ client, interaction, guildSettings, args }) => {
+exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
   const { member } = interaction
   const { permissionLevel, permissionName } = member.perms
   interaction.reply({
@@ -23,9 +23,9 @@ exports.config = {
 exports.slash = {
   description: 'Tells you your permission level for executing bot commands.',
   enabled: true,
-  reload: true,
-  globalCommand: false,
-  testCommand: true,
+  reload: false,
+  globalCommand: true,
+  testCommand: false,
   serverIds: [],
   options: []
 }

@@ -1,9 +1,9 @@
 const { validEvents } = require('../../handlers/listeners')
 
-exports.run = async ({ client, interaction, guildSettings, args }) => {
+exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
   if (!args[0]) {
     return interaction.reply({
-      content: 'Include one of the available events!',
+      content: `${emojis.response.error} Include one of the available events!`,
       ephemeral: true
     })
   }
@@ -24,7 +24,7 @@ exports.run = async ({ client, interaction, guildSettings, args }) => {
 
   client.emit(event, getObj(args[0]), getObj(args[1]), getObj(args[2]))
   interaction.reply({
-    content: `Successfully emitted ${event}`,
+    content: `${emojis.response.success} Successfully emitted ${event}`,
     ephemeral: true
   })
 }
@@ -50,7 +50,7 @@ validEvents.filter((event) => (
 exports.slash = {
   description: 'Emit a discord.js event to the client',
   enabled: true,
-  reload: true,
+  reload: false,
   globalCommand: false,
   testCommand: true,
   serverIds: [],

@@ -1,4 +1,4 @@
-exports.run = ({ client, interaction, guildSettings, args }) => {
+exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
   //
 }
 
@@ -11,7 +11,8 @@ exports.config = {
   throttling: {
     usages: 1,
     duration: 5
-  }
+  },
+  nsfw: null
 }
 
 exports.slash = {

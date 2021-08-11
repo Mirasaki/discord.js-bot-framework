@@ -1,7 +1,7 @@
 const { MessageEmbed, MessageSelectMenu, MessageActionRow, MessageButton } = require('discord.js')
 const { permLevels } = require('../../handlers/permissions')
 
-exports.run = async ({ client, interaction, guildSettings, args }) => {
+exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
   const { member, guild } = interaction
   const disabledCommands = guildSettings.disabledCmds
 
@@ -22,9 +22,8 @@ exports.run = async ({ client, interaction, guildSettings, args }) => {
 
   if (!options[0]) {
     return interaction.reply({
-      content: 'You\'ve disabled all the commands that **can** be disabled, re-enable some with **/**enable!',
-      embeds: [getEmbed(client, guild, guildSettings)],
-      ephemeral: true
+      content: `${emojis.animated.attention} You've disabled all the commands that **can** be disabled, re-enable some with **/**enable!`,
+      embeds: [getEmbed(client, guild, guildSettings)]
     })
   }
 
@@ -60,7 +59,7 @@ const getEmbed = (client, guild, settings) => {
     .setDescription(`${
       settings.disabledCmds[0]
       ? `\`${settings.disabledCmds.join('`, `')}\``
-      : 'None!'
+      : `${client.json.emojis.response.error} None!`
     }`)
 }
 
@@ -79,9 +78,9 @@ exports.config = {
 exports.slash = {
   description: 'Disable specific commands. This only applies to the server the command is called in.',
   enabled: true,
-  reload: true,
-  globalCommand: false,
-  testCommand: true,
+  reload: false,
+  globalCommand: true,
+  testCommand: false,
   serverIds: [],
   options: [],
   listeners: [
@@ -90,7 +89,9 @@ exports.slash = {
       onClick: async function (client, interaction, guildSettings) {
         const { values, guild, member } = interaction
         const { disabledCmds } = guildSettings
-        values.forEach((cmdName) => disabledCmds.push(cmdName))
+        values
+          .filter((cmdName) => !disabledCmds.includes(cmdName))
+          .forEach((cmdName) => disabledCmds.push(cmdName))
         await guildSettings.save()
 
         const options = []
@@ -110,9 +111,8 @@ exports.slash = {
 
         if (!options[0]) {
           return interaction.update({
-            content: 'You\'ve disabled all the commands that **can** be disabled, re-enable some with **/**enable!',
+            content: `${client.json.emojis.animated.attention} You've disabled all the commands that **can** be disabled, re-enable some with **/**enable!`,
             embeds: [getEmbed(client, guild, guildSettings)],
-            ephemeral: true,
             components: []
           })
         }
@@ -147,7 +147,7 @@ exports.slash = {
       customId: 'disable_02',
       onClick: async function (client, interaction, guildSettings) {
         interaction.update({
-          content: 'This **/**disable menu has closed',
+          content: `${client.json.emojis.animated.attention} This **/**disable menu has closed`,
           embeds: [getEmbed(client, interaction.guild, guildSettings)],
           components: []
         })

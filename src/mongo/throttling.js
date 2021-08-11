@@ -9,7 +9,7 @@ const throttleSchema = Schema({
 const ThrottleModel = model('throttle', throttleSchema)
 module.exports.ThrottleModel = ThrottleModel
 
-module.exports.throttleCommand = async (_userId, cmd) => {
+module.exports.throttleCommand = async (client, _userId, cmd) => {
   if (!cmd || typeof cmd !== 'object') throw new TypeError('An invalid command was provided')
   const { config, slash } = cmd
   const { throttling } = config
@@ -26,7 +26,7 @@ module.exports.throttleCommand = async (_userId, cmd) => {
     const nonExpired = data._usages.filter((timestamp) => Date.now() < (timestamp + cmdCd))
     data._usages = nonExpired
     if (nonExpired.length >= throttling.usages) {
-      return `{{user}}, you can use \`**${slash.name}**\` again in ${
+      return `${client.json.emojis.response.error} {{user}}, you can use **\`${slash.name}\`** again in ${
         Number.parseFloat(((nonExpired[0] + cmdCd) - Date.now()) / 1000).toFixed(2)
       } seconds`
     } else {

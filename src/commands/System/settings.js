@@ -8,7 +8,7 @@ const readableSettings = {
 }
 const { settingsCache } = require('../../mongo/settings')
 
-exports.run = async ({ client, interaction, guildSettings, args }) => {
+exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
   const { guild } = interaction
 
   if (args[0].name === 'action') {
@@ -22,7 +22,7 @@ exports.run = async ({ client, interaction, guildSettings, args }) => {
 
       Object.entries(guildSettings._doc).forEach(([key, value]) => {
         if (
-          key === 'disabled_cmds'
+          key === 'disabledCmds'
           || key === '_guildId'
           || key === '__v'
           || key === '_id'
@@ -47,7 +47,7 @@ exports.run = async ({ client, interaction, guildSettings, args }) => {
       guildSettings.delete()
       settingsCache.delete(guild.id)
       interaction.reply({
-        content: 'Successfully reset your server\'s settings!',
+        content: `${emojis.response.success} Successfully reset your server's settings!`,
         ephemeral: true
       })
     }
@@ -86,7 +86,7 @@ exports.run = async ({ client, interaction, guildSettings, args }) => {
       const channel = guild.channels.cache.get(newValue)
       if (channel.type !== 'GUILD_TEXT') {
         return interaction.reply({
-          content: 'Provide a text channel instead!',
+          content: `${emojis.response.error} Provide a text channel instead!`,
           ephemeral: true
         })
       }
@@ -101,7 +101,7 @@ exports.run = async ({ client, interaction, guildSettings, args }) => {
       const channel = guild.channels.cache.get(newValue)
       if (channel.type !== 'GUILD_TEXT') {
         return interaction.reply({
-          content: 'Provide a text channel instead!',
+          content: `${emojis.response.error} Provide a text channel instead!`,
           ephemeral: true
         })
       }
@@ -145,7 +145,7 @@ exports.config = {
   clientPermissions: [],
   userPermissions: [],
   throttling: {
-    usages: 1,
+    usages: 2,
     duration: 5
   }
 }
@@ -153,9 +153,9 @@ exports.config = {
 exports.slash = {
   description: 'Configure the permission levels for your server, this determines what commands members can use',
   enabled: true,
-  reload: true,
-  globalCommand: false,
-  testCommand: true,
+  reload: false,
+  globalCommand: true,
+  testCommand: false,
   serverIds: [],
   options: [
     {

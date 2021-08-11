@@ -3,6 +3,7 @@ const { parseSnakeCaseArray } = require('../utils/tools')
 const { Permissions } = require('discord.js')
 const { getSettingsCache } = require('../mongo/settings')
 const config = require('../../config/config.json')
+const { stripIndents } = require('common-tags')
 
 const permConfig = [
   {
@@ -113,7 +114,7 @@ module.exports.checkCommandPermissions = async (client, member, channel, cmd, in
   const { permissionName, permissionLevel } = userPermLevel
   const embed = {
     color: 'RED',
-    title: `There was a problem while using "${cmd.slash.name}"`,
+    title: `${client.json.emojis.response.error} There was a problem while using "/${cmd.slash.name}" in #${channel.name}`,
     fields: []
   }
 
@@ -122,7 +123,7 @@ module.exports.checkCommandPermissions = async (client, member, channel, cmd, in
     permLevels[cmd.config.permLevel]
     > permissionLevel
   ) {
-    embed.description = `${member}, you don't have the required permission level to use this command.
+    embed.description = stripIndents`${member}, you don't have the required permission level to use this command.
     \nRequired permission level: __${permLevels[cmd.config.permLevel]}__ - **${
       cmd.config.permLevel
     }**\nYour permission level: __${permissionLevel}__ - **${
@@ -141,7 +142,7 @@ module.exports.checkCommandPermissions = async (client, member, channel, cmd, in
     (
       this.hasChannelPerms(clientId, channel, 'ADMINISTRATOR') === true
       || clientPermissions === true
-    ) || (
+    ) && (
       this.hasChannelPerms(userId, channel, 'ADMINISTRATOR') === true
       || userPermissions === true
     )

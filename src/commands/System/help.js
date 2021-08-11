@@ -1,13 +1,14 @@
 const { MessageEmbed } = require('discord.js')
 const { titleCase } = require('../../utils/tools')
 const { permLevels } = require('../../handlers/permissions')
+const { stripIndents } = require('common-tags')
 
-exports.run = ({ client, interaction, guildSettings, args }) => {
+exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
   const { channel, member, guild } = interaction
   const { permissionLevel } = member.perms
 
   if (!args[0]) {
-    const authorCommands = client.commands.filter(cmd => permLevels[cmd.config.permLevel] <= permissionLevel).array()
+    const authorCommands = client.commands.filter(cmd => permLevels[cmd.config.permLevel] <= permissionLevel)
     const commands = authorCommands
       .sort((a, b) => a.slash.category > b.slash.category
         ? 1
@@ -33,7 +34,7 @@ exports.run = ({ client, interaction, guildSettings, args }) => {
           .setThumbnail(guild.iconURL({ dynamic: true }))
           .setColor(client.json.colors.main)
           .setDescription(embedText)
-          .addField('Detailed Command Information', '/help <any command>')
+          .addField('Detailed Command Information', '**/**help <any command name>')
       ]
     })
   }
@@ -42,7 +43,8 @@ exports.run = ({ client, interaction, guildSettings, args }) => {
   const command = client.commands.get(commandName)
   if (!command) {
     return interaction.reply({
-      content: 'That\'s not a valid command!'
+      content: `${emojis.animated.attention} That's not a valid command!`,
+      ephemeral: true
     })
   }
   const { config, slash } = command
@@ -54,7 +56,7 @@ exports.run = ({ client, interaction, guildSettings, args }) => {
     > permissionLevel
   ) {
     return interaction.reply({
-      content: `${member}, you don't have permission to use that command!`,
+      content: `${emojis.response.error} ${member}, you don't have permission to use that command!`,
       ephemeral: true
     })
   }
@@ -64,11 +66,16 @@ exports.run = ({ client, interaction, guildSettings, args }) => {
       new MessageEmbed({ fields })
         .setColor(client.json.colors.main)
         .setAuthor(titleCase(slash.name))
-        .setDescription(`${slash.description}
-          \n**Category:** ${
-            slash.category
+        .setDescription(stripIndents`${slash.description}${
+            config.nsfw === true
+            ? `\n\n**SFW:** ${emojis.response.error}\n`
+            : '\n\n'
+          }**Category:** ${
+            slash.category === 'System'
+            ? `${emojis.double.system1}${emojis.double.system2}`
+            : slash.category
           }
-          **Cooldown:** ${
+          **Max Uses:** ${
             throttling
             ? `${
               throttling.usages === 1
@@ -82,39 +89,41 @@ exports.run = ({ client, interaction, guildSettings, args }) => {
             : 'No cooldown!'
           }
           **Slash Command:** ${
-            slash && slash.enabled && slash.global ? 'Yes' : 'No'
+            slash && slash.enabled && slash.global
+            ? emojis.animated.on
+            : emojis.animated.off
           }
           **Can Be Disabled:** ${
-            config.required ? 'Yes' : 'No'
-          }
-          
-          **Permissions:**
-          **Me:** ${
-            config.clientPermissions[0]
-            ? `\`${getPermString(config.clientPermissions, channel, client.user.id)}\``
-            : 'None required!'
-          }
-          **You:** ${
-            config.userPermissions[0]
-            ? `\`${getPermString(config.userPermissions, channel, member.id)}\``
-            : 'None required!'
+            config.required
+            ? emojis.animated.on
+            : emojis.animated.off
           }
         `)
-        .setFooter('<>: Angle bracket notation means the option is required.\n[]: Square bracket notation means the option is optional.')
+        .addField('My Permissions', `${
+          config.clientPermissions[0]
+          ? `> ${getPermString(client, config.clientPermissions, channel, client.user.id)}`
+          : `${emojis.response.success} None required!`
+        }`, true)
+        .addField('Your Permissions', `${
+          config.userPermissions[0]
+          ? `> ${getPermString(client, config.userPermissions, channel, member.id)}`
+          : `${emojis.response.success} None required!`
+        }`, true)
+        .setFooter('')
     ]
   })
 }
 
-const getPermString = (arr, channel, id) => {
+const getPermString = (client, arr, channel, id) => {
   const temp = []
   arr.forEach((perm) => {
     const check = channel.permissionsFor(id) && channel.permissionsFor(id).has(perm)
     perm = perm.toLowerCase().split(/[ _]+/)
     for (let i = 0; i < perm.length; i++) perm[i] = perm[i].charAt(0).toUpperCase() + perm[i].slice(1)
-    if (check) temp.push(`\`✅ ${perm.join(' ')}\``)
-    else temp.push(`\`🚫 ${perm.join(' ')}\``)
+    if (check) temp.push(`${client.json.emojis.response.success} ${perm.join(' ')}`)
+    else temp.push(`${client.json.emojis.response.error} ${perm.join(' ')}`)
   })
-  return temp.join('` - `')
+  return temp.join('\n> ')
 }
 
 exports.config = {
@@ -132,9 +141,9 @@ exports.config = {
 exports.slash = {
   description: 'Get an overview on all the available commands!',
   enabled: true,
-  reload: true,
-  globalCommand: false,
-  testCommand: true,
+  reload: false,
+  globalCommand: true,
+  testCommand: false,
   serverIds: [],
   options: [
     {
