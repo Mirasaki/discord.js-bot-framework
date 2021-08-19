@@ -245,7 +245,7 @@ const slashTypes = {
   category: '',
   description: '',
   enabled: true,
-  reload: true,
+  reload: false,
   globalCommand: true,
   testCommand: true,
   serverIds: 'array',

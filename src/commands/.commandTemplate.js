@@ -20,7 +20,7 @@ exports.slash = {
   category: '',
   description: '',
   enabled: true,
-  reload: true,
+  reload: false,
   globalCommand: false,
   testCommand: true,
   serverIds: [],
