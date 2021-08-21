@@ -31,6 +31,7 @@ module.exports.humanTimeToMS = (input, min, max) => {
         case 'h': multiplier = 1000 * 60 * 60; break
         case 'd': multiplier = 1000 * 60 * 60 * 24; break
         case 'w': multiplier = 1000 * 60 * 60 * 24 * 7; break
+        default: break
       }
       ms += parseInt(element.slice(0, -1)) * multiplier
     })
