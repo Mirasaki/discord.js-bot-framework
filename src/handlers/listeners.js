@@ -1,10 +1,11 @@
 const { getFiles } = require('../utils/tools')
+const nodePath = require('path')
 
 module.exports.initializeListeners = (client, counter = 0) => {
   const loadedListeners = []
   console.log('Initializing listeners:')
   for (let path of getFiles(process.env.EVENTS_PATH, '.js')) {
-    path = path.replace(/\\/g, '/')
+    path = path.replaceAll(nodePath.sep, '/')
     const event = require(path)
     const eventName = path.slice(path.lastIndexOf('/') + 1, path.length - 3)
     const check = loadedListeners.find((e) => e.name === eventName)

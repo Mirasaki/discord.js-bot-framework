@@ -3,6 +3,7 @@ const { getFiles } = require('../utils/tools')
 const { validatePermissions, permLevels } = require('./permissions')
 const commandPaths = getFiles(process.env.COMMANDS_PATH, '.js')
 const tempCommands = []
+const nodePath = require('path')
 
 module.exports.validateCommands = (client, counter = 0) => {
   console.log('\nValidating Commands:')
@@ -121,7 +122,7 @@ module.exports.loadSlashCommands = async (client) => {
 
 const validateCommand = (client, cmd, path) => {
   let problems = []
-  path = path.replace(/\\/g, '/')
+  path = path.replaceAll(nodePath.sep, '/')
   const shortPath = path.slice(
     path.indexOf(process.env.COMMANDS_PATH), path.length
   )

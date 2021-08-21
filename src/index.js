@@ -6,7 +6,8 @@ const { Client, Intents } = require('discord.js')
 const { validateCommands } = require('./handlers/commands.js')
 const { initializeListeners } = require('./handlers/listeners.js')
 const { log } = require('./handlers/logger.js')
-const { getFiles } = require('./utils/tools.js');
+const { getFiles } = require('./utils/tools.js')
+const nodePath = require('path');
 
 (async () => {
   const client = new Client({
@@ -26,7 +27,7 @@ const { getFiles } = require('./utils/tools.js');
   await require('./mongo/connection')()
   client.json = {}
   for (let path of getFiles('config/', '.json')) {
-    path = path.replace(/\\/g, '/')
+    path = path.replaceAll(nodePath.sep, '/')
     client.json[path.slice(path.lastIndexOf('/') + 1, path.length - 5)] = require(path)
   }
   log('Bound config/*.json to client.json', 'success')
