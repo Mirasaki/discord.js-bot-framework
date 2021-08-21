@@ -5,7 +5,7 @@ const nodePath = require('path')
 module.exports.getFiles = (path, extension) => {
   if (!nodePath.isAbsolute(path)) path = nodePath.resolve(path)
   let res = []
-  readdirSync(path).forEach((itemInDir) => {
+  for (let itemInDir of readdirSync(path)) {
     itemInDir = nodePath.resolve(path, itemInDir)
     const stat = statSync(itemInDir)
     if (stat.isDirectory()) res = res.concat(this.getFiles(itemInDir, extension))
@@ -16,7 +16,7 @@ module.exports.getFiles = (path, extension) => {
         itemInDir.lastIndexOf(nodePath.sep) + 1, itemInDir.length
       ).startsWith('.')
     ) res.push(itemInDir)
-  })
+  }
   return res
 }
 
