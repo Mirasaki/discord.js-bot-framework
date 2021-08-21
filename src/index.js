@@ -23,7 +23,7 @@ const { getFiles } = require('./utils/tools.js');
   })
   validateCommands(client)
   initializeListeners(client)
-  await require('./mongoConnection')()
+  await require('./mongo/connection')()
   client.json = {}
   for (let path of getFiles('config/', '.json')) {
     path = path.replace(/\\/g, '/')
