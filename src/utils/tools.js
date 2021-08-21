@@ -1,18 +1,19 @@
-const { resolve } = require('path')
 const { readdirSync, statSync } = require('fs')
+const nodePath = require('path')
 
 // getFiles() ignores files that start with "."
 module.exports.getFiles = (path, extension) => {
+  if (!nodePath.isAbsolute(path)) path = nodePath.resolve(path)
   let res = []
   readdirSync(path).forEach((itemInDir) => {
-    itemInDir = resolve(path, itemInDir)
+    itemInDir = nodePath.resolve(path, itemInDir)
     const stat = statSync(itemInDir)
     if (stat.isDirectory()) res = res.concat(this.getFiles(itemInDir, extension))
     if (
       stat.isFile()
       && itemInDir.endsWith(extension)
       && !itemInDir.slice(
-        itemInDir.lastIndexOf('\\') + 1, itemInDir.length
+        itemInDir.lastIndexOf(nodePath.sep) + 1, itemInDir.length
       ).startsWith('.')
     ) res.push(itemInDir)
   })
