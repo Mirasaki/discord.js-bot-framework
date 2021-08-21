@@ -46,19 +46,5 @@
     "eslint-plugin-promise": "^5.1.0",
     "nodemon": "^2.0.12"
   },
-  "type": "commonjs",
-  "nodemonConfig": {
-    "restartable": "rs",
-    "ignore": [
-      ".git",
-      "node_modules/**/node_modules"
-    ],
-    "verbose": true,
-    "watch": ["*"],
-    "env": {
-      "NODE_ENV": "development"
-    },
-    "ext": "*",
-    "runOnChangeOnly": true
-  }
+  "type": "commonjs"
 }
