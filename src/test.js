@@ -24,7 +24,7 @@ const nodePath = require('path');
   })
   validateCommands(client)
   initializeListeners(client)
-  await require('./mongo/connection')()
+  // await require('./mongo/connection')()
   client.json = {}
   for (let path of getFiles('config/', '.json')) {
     path = path.replaceAll(nodePath.sep, '/')
@@ -33,4 +33,3 @@ const nodePath = require('path');
   log('Bound config/*.json to client.json', 'success')
   log('Successfully initialized and completed test!', 'success')
 })()
-  
