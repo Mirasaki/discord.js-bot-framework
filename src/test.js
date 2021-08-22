@@ -33,4 +33,3 @@ const nodePath = require('path');
   log('Bound config/*.json to client.json', 'success')
   log('Successfully initialized and completed test!', 'success')
 })()
-  
