@@ -69,7 +69,7 @@ exports.log = (content, type = 'log') => {
     case 'success': str += `${chalk.bgGreen(type.toUpperCase())}`; break
     case 'info': str += `${chalk.bgWhite(type.toUpperCase())}`; break
     case 'blank': str = str.slice(0, -1); break
-    default: throw new TypeError(`Unknown log() type! Must be one of: [
+    default: throw new TypeError(`Unknown type provided! Must be one of: [
       ${chalk.bgBlue('log')},
       ${chalk.bgRedBright('error')},
       ${chalk.bgMagenta('debug')},
