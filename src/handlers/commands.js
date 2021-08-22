@@ -1,7 +1,7 @@
 const { Collection } = require('discord.js')
 const { getFiles } = require('../utils/tools')
 const { validatePermissions, permLevels } = require('./permissions')
-const commandPaths = getFiles(process.env.COMMANDS_PATH, '.js')
+const commandPaths = getFiles(process.env.COMMANDS_PATH || 'src/commands', '.js')
 const tempCommands = []
 const nodePath = require('path')
 
