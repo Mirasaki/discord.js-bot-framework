@@ -1,0 +1,12 @@
+{
+    "restartable": "rs",
+    "ignore": [
+      ".git",
+      "*.log"
+    ],
+    "env": {
+      "NODE_ENV": "development"
+    },
+    "ext": "*",
+    "runOnChangeOnly": true
+}

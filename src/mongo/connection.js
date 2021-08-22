@@ -1,5 +1,5 @@
 const { connect, connection } = require('mongoose')
-const { log } = require('./handlers/logger')
+const { log } = require('../handlers/logger')
 
 module.exports = async () => {
   await connect(process.env.MONGO_LINK, {

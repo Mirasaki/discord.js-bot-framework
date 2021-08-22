@@ -7,7 +7,7 @@ const { logger } = require('../src/handlers/logger')
 const { ThrottleModel } = require('../src/mongo/throttling');
 
 (async () => {
-  await require('../src/mongoConnection')()
+  await require('../src/mongo/connection')()
   await ThrottleModel.deleteMany()
   await connection.close()
   logger.log({

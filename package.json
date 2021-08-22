@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node src/test.js",
     "dev": "nodemon run node .",
     "resetThrottling": "node scripts/purgeCmdThrottleCollection.js"
   },
@@ -32,7 +32,7 @@
   "dependencies": {
     "chalk": "^4.1.1",
     "common-tags": "^1.8.0",
-    "discord.js": "^13.0.1",
+    "discord.js": "^13.1.0",
     "dotenv": "^10.0.0",
     "moment": "^2.29.1",
     "mongoose": "^5.13.3",
@@ -40,10 +40,7 @@
   },
   "devDependencies": {
     "eslint": "^7.31.0",
-    "eslint-config-standard": "^16.0.3",
-    "eslint-plugin-import": "^2.23.4",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.1.0"
+    "nodemon": "^2.0.12"
   },
   "type": "commonjs"
 }
