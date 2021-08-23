@@ -126,8 +126,8 @@ exports.config = {
   enabled: true,
   required: true,
   permLevel: 'User',
-  clientPermissions: ['EMBED_LINKS'],
-  userPermissions: [],
+  clientPermissions: [],
+  userPermissions: ['EMBED_LINKS'],
   throttling: {
     usages: 3,
     duration: 10
