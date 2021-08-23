@@ -8,15 +8,24 @@ const { isEqual } = require('lodash');
 const { log } = require('./logger');
 
 module.exports.validateCommands = (client) => {
-  console.log('\nValidating Commands:');
   client.commands = new Collection();
+  const table = [];
   for (const path of commandPaths) {
     const cmd = require(path);
     const res = validateCommand(client, cmd, path);
     client.commands.set(cmd.slash.name, cmd);
-    console.log(res);
+    table.push(res);
   }
-  console.log('Finished Validating commands!\n');
+  console.log();
+  log('Successfully validated all commands!', 'success');
+  console.table(table.map((cmd) => {
+    return {
+      command: cmd.split(':')[0].trim(),
+      path: cmd.split(':')[1].trim(),
+      enabled: cmd.split(':')[2]
+    };
+  }));
+  console.log();
 };
 
 module.exports.reloadCommand = (client, cmd) => {
@@ -140,9 +149,9 @@ module.exports.loadSlashCommands = async (client) => {
     );
 
     if (slash.globalCommand === true) {
-      if (globalCommand && dataChanged(applicationCommandData, globalCommand)) commands.edit(globalCommand, applicationCommandData) && consoleOutput.push('    G Edited global command with new data');
-      else if (!globalCommand) commands.create(applicationCommandData) && consoleOutput.push('    G Created global command');
-    } else if (slash.globalCommand === false && globalCommand) commands.delete(globalCommand) && consoleOutput.push('    G Deleted global command');
+      if (globalCommand && dataChanged(applicationCommandData, globalCommand)) commands.edit(globalCommand, applicationCommandData) && consoleOutput.push('    G Editing global command with new data (Can take up to 1 hour to take effect)');
+      else if (!globalCommand) commands.create(applicationCommandData) && consoleOutput.push('    G Creating global command (Can take up to 1 hour to take effect)');
+    } else if (slash.globalCommand === false && globalCommand) commands.delete(globalCommand) && consoleOutput.push('    G Deleting global command (Can take up to 1 hour to take effect)');
 
     if (testServer) {
       if (slash.testCommand === true) {
@@ -179,6 +188,7 @@ module.exports.loadSlashCommands = async (client) => {
   }));
   if (testServer) {
     const testCommands = await testServer.commands.fetch();
+    console.log();
     log(`Loaded ${testCommands.size} test commands!`, 'success');
     console.table(testCommands.map((testCmd) => {
       return {
@@ -186,7 +196,6 @@ module.exports.loadSlashCommands = async (client) => {
         description: testCmd.description
       };
     }));
-
   }
 };
 
@@ -231,14 +240,13 @@ const validateCommand = (client, cmd, path) => {
 
   if (check) throw new Error(`CommandExportsValidationError:\nDuplicate Command: ${slash.name} already registered!\nOriginal command: ${check.origin}\nRequested event: ${path}`);
   tempCommands.push(thisObj);
-  const logStr = `    ${
-    config.enabled === false
-      ? 'X'
-      : tempCommands.indexOf(thisObj) + 1
-  } ${slash.name}: ${thisObj.origin.slice(
-    thisObj.origin
-      .indexOf(process.env.COMMANDS_PATH), thisObj.origin.length
-  )}`;
+  const logStr = `    ${slash.name}: ${thisObj.origin.slice(
+    thisObj.origin.indexOf(process.env.COMMANDS_PATH), thisObj.origin.length
+  )}:${
+    config.enabled
+      ? 'yes'
+      : 'no'
+  }`;
   if (
     config
     && config.enabled === false

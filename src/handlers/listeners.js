@@ -1,9 +1,10 @@
 const { getFiles } = require('../utils/tools');
 const nodePath = require('path');
+const { log } = require('./logger');
 
 module.exports.initializeListeners = (client) => {
   const loadedListeners = [];
-  console.log('Initializing listeners:');
+  const table = [];
   for (let path of getFiles(process.env.EVENTS_PATH || 'src/listeners', '.js')) {
     path = path.replaceAll(nodePath.sep, '/');
     const event = require(path);
@@ -14,14 +15,18 @@ module.exports.initializeListeners = (client) => {
     if (check) throw new Error(`Duplicate Event: ${eventName} already loaded/bound!\nOriginal event: ${check.origin}\nRequested event: ${path}`);
     loadedListeners.push(thisObj);
     client.on(eventName, (...received) => event(client, ...received));
-    console.log(`    ${loadedListeners.indexOf(thisObj) + 1} ${eventName}: ${
-      thisObj.origin.slice(
+    table.push({
+      name: eventName,
+      path: thisObj.origin.slice(
         thisObj.origin
           .indexOf(process.env.EVENTS_PATH
           ), thisObj.origin.length
-      )}`);
+      )
+    });
   }
-  console.log('Finished initializing listeners!\n');
+  log('Finished initializing listeners!', 'success');
+  console.table(table);
+  console.log();
 };
 
 module.exports.validEvents = [
