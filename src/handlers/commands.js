@@ -157,7 +157,6 @@ const validateCommand = (client, cmd, path) => {
   if (!slash.globalCommand) slash.globalCommand = true
   if (!slash.options) slash.options = []
 
-  
   config.path = path
 
   const thisObj = { name: slash.name, origin: path }
