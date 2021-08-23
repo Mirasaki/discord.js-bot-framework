@@ -8,6 +8,8 @@
 
 This is a framework build on top of [discord.js](https://github.com/discordjs/discord.js "discord.js on Github") for quickly and easily creating powerful [Discord](https://discord.com/ "Official Discord Website") bots. You don't need much Javascript experience to get started on a project using this framework, if you want to quickly add new commands, check out [this guide to adding new commands](./tutorial/2AddingCommands.md). Still not sure where to start? Come join my [Discord Server](https://discord.gg/V8N5QqD8qX), where I'll try and answer all the questions you have.
 
+With [Message Content Access becoming a privileged intent](https://support-dev.discord.com/hc/en-us/articles/4404772028055-Message-Content-Access-Deprecation-for-Verified-Bots "source") I thought I'd build a framework where Slash Commands are fully built-in. This framework doesn't even listen to the `message/messageCreate` event. On every restart the framework will check for any changes in your Slash Command data and automatically update it accordingly. All the fun things like Buttons and Select Menus are also available without having much prior knowledge, just look at some of the examples in the `/disable` and `/enable` command.
+
 Zero to none experience with Javascript? Check out [this page](./tutorial/1GettingStarted.md) where you can follow along step-by-step to create your own Discord bot **using this framework**.
 </div>
 
@@ -22,6 +24,7 @@ Zero to none experience with Javascript? Check out [this page](./tutorial/1Getti
 Complete | Notes
 -------- | ---------
 ✅ Built-in Slash Commands | [Message Content Access is becoming a privileged intent](https://support-dev.discord.com/hc/en-us/articles/4404772028055-Message-Content-Access-Deprecation-for-Verified-Bots "source") and that's why this framework makes full use of interactions (slash commands, buttons and select menus) instead of message content. In fact, we don't even listen to ***any*** messages.
+✅ Automatically update Slash commands | This framework will check for any changes to your Slash Command data and update it accordingly, no need for executing scripts and weird work-arounds to update them when needed.
 ✅ Different types of slash commands | Configure your command to be *global*, *test server only* or *server specific*. Allowing you to test properly, release the command to specific servers and finally make it available globally.
 ✅ Required and optional commands | Configure whether or not your command is a required command or optional. Required commands ***can't*** be disabled by individual servers, optional commands ***can***.
 ✅ Throttling | Configure command throttling for all your commands! Allow infinite usages for a command that barely does anything, and restrict resource-heavy commands to a 1 max usage in 120 seconds. (That's just an example, you can literally do anything.)
@@ -31,7 +34,6 @@ Complete | Notes
 
 Incomplete | Notes
 ---------- | -----
-⌛ Automatically update Slash commands | Currently, you can reload a Slash command by configuration in the command export. I'd like to change that so it automatically checks if the new Slash Command data is different from the currently registered data.
 ⌛ Add support for DM commands | At the time of writing this, Slash Commands can be called in a bots DM channel. I'd like to add full support for DM Slash Commands.
 
 ## Extras

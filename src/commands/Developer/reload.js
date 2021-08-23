@@ -40,7 +40,6 @@ exports.config = {
 exports.slash = {
   description: 'Reload a command',
   enabled: true,
-  reload: false,
   globalCommand: false,
   testCommand: true,
   serverIds: [],

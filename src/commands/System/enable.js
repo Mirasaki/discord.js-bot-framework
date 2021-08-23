@@ -77,7 +77,6 @@ exports.config = {
 exports.slash = {
   description: 'Enable previously disabled commands. This only applies to the server the command is called in.',
   enabled: true,
-  reload: false,
   globalCommand: true,
   testCommand: false,
   serverIds: [],

@@ -36,7 +36,6 @@ Setup the listener from the same file, like so:
 exports.slash = {
     description: 'Disable commands for your server.',
     enabled: true,
-    reload: true,
     globalCommand: false,
     testCommand: true,
     serverIds: ['Another test server ID'],

@@ -44,7 +44,6 @@ exports.config = {
 exports.slash = {
   description: 'Displays bot information',
   enabled: true,
-  reload: false,
   globalCommand: true,
   testCommand: false,
   serverIds: [],

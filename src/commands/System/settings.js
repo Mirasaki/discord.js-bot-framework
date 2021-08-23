@@ -155,7 +155,6 @@ exports.config = {
 exports.slash = {
   description: 'Configure the permission levels for your server, this determines what commands members can use',
   enabled: true,
-  reload: false,
   globalCommand: true,
   testCommand: false,
   serverIds: [],

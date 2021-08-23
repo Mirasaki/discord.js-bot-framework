@@ -23,7 +23,6 @@ exports.config = {
 exports.slash = {
   description: 'Tells you your permission level for executing bot commands.',
   enabled: true,
-  reload: false,
   globalCommand: true,
   testCommand: false,
   serverIds: [],

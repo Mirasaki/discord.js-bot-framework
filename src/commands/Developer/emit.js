@@ -23,6 +23,7 @@ exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
     }
   };
 
+  console.log(args[1]);
   client.emit(event, getObj(args[0]), getObj(args[1]), getObj(args[2]));
   interaction.reply({
     content: `${emojis.response.success} Successfully emitted ${event}`,
@@ -51,7 +52,6 @@ validEvents.filter((event) => (
 exports.slash = {
   description: 'Emit a discord.js event to the client',
   enabled: true,
-  reload: false,
   globalCommand: false,
   testCommand: true,
   serverIds: [],

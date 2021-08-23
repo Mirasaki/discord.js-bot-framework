@@ -4,6 +4,8 @@ const { validatePermissions, permLevels } = require('./permissions');
 const commandPaths = getFiles(process.env.COMMANDS_PATH || 'src/commands', '.js');
 const tempCommands = [];
 const nodePath = require('path');
+const { isEqual } = require('lodash');
+const { log } = require('./logger');
 
 module.exports.validateCommands = (client) => {
   console.log('\nValidating Commands:');
@@ -35,6 +37,49 @@ module.exports.reloadCommand = (client, cmd) => {
   client.commands.set(newCmd.slash.name, newCmd);
 };
 
+const typeMap = {
+  1: 'SUB_COMMAND',
+  2: 'SUB_COMMAND_GROUP',
+  3: 'STRING',
+  4: 'INTEGER',
+  5: 'BOOLEAN',
+  6: 'USER',
+  7: 'CHANNEL',
+  8: 'ROLE',
+  9: 'MENTIONABLE',
+  10: 'NUMBER'
+};
+
+const isIterable = (obj) => {
+  if (obj == null) return false;
+  else return typeof obj[Symbol.iterator] === 'function';
+};
+
+const getOptions = (options) => {
+  if (!isIterable(options)) return options;
+  for (const option of options) {
+    if (option.type && !isNaN(option.type)) option.type = typeMap[option.type];
+    if (!option.options) option.options = undefined;
+    if (
+      option.type === 'SUB_COMMAND_GROUP'
+      || option.type === 'SUB_COMMAND'
+    ) {
+      option.required = undefined;
+      option.options = getOptions(option.options);
+    }
+    if (option.type === 'SUB_COMMAND' || option.type === 'SUB_COMMAND_GROUP') option.required = undefined;
+    if (typeof option.required === 'undefined') {
+      (
+        option.type === 'SUB_COMMAND_GROUP' || option.type === 'SUB_COMMAND'
+          ? option.required = undefined
+          : option.required = false
+      );
+    }
+    if (typeof option.choices === 'undefined') option.choices = undefined;
+  }
+  return options;
+};
+
 module.exports.loadSlashCommands = async (client) => {
   const { application } = client;
   const { commands } = application;
@@ -42,6 +87,7 @@ module.exports.loadSlashCommands = async (client) => {
   const testServer = client.guilds.cache.get(client.json.config.ids.testServer);
 
   for await (const path of commandPaths) {
+    const consoleOutput = [];
     const cmd = require(path);
     const { slash } = cmd;
     const applicationCommandData = {
@@ -49,9 +95,11 @@ module.exports.loadSlashCommands = async (client) => {
       description: slash.description,
       options: (
         Array.isArray(slash.options)
-          ? slash.options
+          ? getOptions(slash.options)
           : []
-      )
+      ),
+      type: 'CHAT_INPUT',
+      defaultPermission: slash.defaultPermission
     };
 
     let testCommand;
@@ -66,56 +114,68 @@ module.exports.loadSlashCommands = async (client) => {
     const globalCommand = globalCommands.find((e) => e.name === slash.name && e.guildId === null);
 
     if (slash.enabled === false) {
-      console.log(`Disabling Slash Command: ${slash.name}`);
+      consoleOutput.push(`Disabling Slash Command: ${slash.name}`);
       try {
-        if (globalCommand) commands.delete(globalCommand) && console.log('    G Disabled global command');
-        if (testCommand && testServer) testServer.commands.delete(testCommand) && console.log('    T Disabled test command');
+        if (globalCommand) commands.delete(globalCommand) && consoleOutput.push('    G Disabled global command');
+        if (testCommand && testServer) testServer.commands.delete(testCommand) && consoleOutput.push('    T Disabled test command');
         for (const entry of client.guilds.cache.filter((guild) => guild.id !== client.json.config.ids.testServer)) {
           const guild = entry[1];
           const guildCmds = await guild.commands.fetch();
           const guildClientCmd = guildCmds.find((e) => e.name === slash.name && e.client.user.id === client.user.id);
-          if (guildClientCmd) guild.commands.delete(guildClientCmd.id) && console.log(`    S Disabled server specific command for <${guild.name}>`);
+          if (guildClientCmd) guild.commands.delete(guildClientCmd.id) && consoleOutput.push(`    S Disabled server specific command for <${guild.name}>`);
         }
       } catch (err) {
         return console.log(`Error encountered while disabling slash command ${slash.name}\n${err.stack || err}`);
       }
-      console.log(`Successfully Disabled: ${slash.name}\n`);
+      consoleOutput.push(`Successfully Disabled: ${slash.name}\n`);
+      console.log(consoleOutput.join('\n'));
       continue;
     }
 
-    if (slash.reload !== true) continue;
+    consoleOutput.push(`Reloading Slash Command: ${slash.name}`);
 
-    console.log(`Reloading Slash Command: ${slash.name}`);
+    const dataChanged = (commandData, apiData) => (
+      commandData.description !== apiData.description
+      || !isEqual(applicationCommandData.options, apiData.options)
+    );
 
     if (slash.globalCommand === true) {
-      if (globalCommand) commands.edit(globalCommand, applicationCommandData) && console.log('    G Edited global command with new data');
-      else commands.create(applicationCommandData) && console.log('    G Created global command');
-    } else if (slash.globalCommand === false && globalCommand) commands.delete(globalCommand) && console.log('    G Deleted global command');
+      if (globalCommand && dataChanged(applicationCommandData, globalCommand)) commands.edit(globalCommand, applicationCommandData) && consoleOutput.push('    G Edited global command with new data');
+      else if (!globalCommand) commands.create(applicationCommandData) && consoleOutput.push('    G Created global command');
+    } else if (slash.globalCommand === false && globalCommand) commands.delete(globalCommand) && consoleOutput.push('    G Deleted global command');
 
     if (testServer) {
       if (slash.testCommand === true) {
-        if (testCommand) testServer.commands.edit(testCommand, applicationCommandData) && console.log('    T Edited test command with new data');
-        else testServer.commands.create(applicationCommandData) && console.log('    T Created Test Command');
-      } else if (slash.testCommand === false && testCommand) testServer.commands.delete(testCommand) && console.log('    T Deleted test command');
+        if (testCommand && dataChanged(applicationCommandData, testCommand)) testServer.commands.edit(testCommand, applicationCommandData) && consoleOutput.push('    T Edited test command with new data');
+        else if (!testCommand) testServer.commands.create(applicationCommandData) && consoleOutput.push('    T Created Test Command');
+      } else if (slash.testCommand === false && testCommand) testServer.commands.delete(testCommand) && consoleOutput.push('    T Deleted test command');
     }
 
     if (Array.isArray(slash.serverIds)) {
       for (const entry of client.guilds.cache.filter((guild) => !slash.serverIds.includes(guild.id) && guild.id !== client.json.config.ids.testServer)) {
         const guild = entry[1];
-        const guildCmds = await guild.commands.fetch();
+        const guildCmds = await guild.commands.fetch(); 
         const guildClientCmd = guildCmds.find((e) => e.name === slash.name && e.client.user.id === client.user.id);
-        if (guildClientCmd) guild.commands.delete(guildClientCmd.id) && console.log(`    S Deleted server specific command for <${guild.name}>`);
+        if (guildClientCmd) guild.commands.delete(guildClientCmd.id) && consoleOutput.push(`    S Deleted server specific command for <${guild.name}>`);
       }
       for (const serverId of slash.serverIds) {
         const guild = client.guilds.cache.get(serverId);
         if (!guild || guild.id === client.json.config.ids.testServer) continue;
         const guildCmds = await guild.commands.fetch();
         const guildClientCmd = guildCmds.find((e) => e.name === slash.name && e.client.user.id === client.user.id);
-        if (!guildClientCmd) guild.commands.create(applicationCommandData) && console.log(`    S Created server specific command for <${guild.name}>`);
-        else guild.commands.edit(guildClientCmd, applicationCommandData) && console.log(`    S Edited server specific command for <${guild.name}>`);
+        if (!guildClientCmd) guild.commands.create(applicationCommandData) && consoleOutput.push(`    S Created server specific command for <${guild.name}>`);
+        else if (guildClientCmd && dataChanged(applicationCommandData, guildClientCmd)) guild.commands.edit(guildClientCmd, applicationCommandData) && consoleOutput.push(`    S Edited server specific command for <${guild.name}>`);
       }
     }
-    console.log(`Finished Reloading: ${slash.name}\n`);
+    consoleOutput.push(`Finished Reloading: ${slash.name}\n`);
+    if (consoleOutput.length > 2) console.log(consoleOutput.join('\n'));
+  }
+  log(`Loaded ${globalCommands.size} global slash commands!`, 'success');
+  // ${globalCommands.map(globalCmd => globalCmd.name).join(' - ')}
+  if (testServer) {
+    const testCommands = await testServer.commands.fetch();
+    log(`Loaded ${testCommands.size} test commands!`, 'success');
+    // ${testCommands.map((testCmd) => testCmd.name).join(' - ')}
   }
 };
 
@@ -135,26 +195,23 @@ const validateCommand = (client, cmd, path) => {
   }
 
   const splitPath = path.split('/');
-  const commandNameFromFile = splitPath[splitPath.length - 1].slice(0, -3);
-  const commandCategoryFromFile = splitPath[splitPath.length - 2];
 
-  if (!config.enabled) config.enabled = true;
-  if (!config.required) config.required = true;
-  if (!config.clientPermissions) config.clientPermissions = [];
-  if (!config.userPermissions) config.userPermissions = [];
-  if (!config.throttling) config.throttling = false;
-  if (!config.nsfw) config.nsfw = false;
-
-  if (!slash.name) slash.name = commandNameFromFile;
-  if (!slash.category) slash.category = slash.category === 'commands' ? 'Uncategorized' : commandCategoryFromFile;
-  if (!slash.listeners) slash.listeners = [];
-  if (!slash.testCommand) slash.testCommand = false;
-  if (!slash.serverIds) slash.serverIds = [];
-  if (!slash.listeners) slash.listeners = [];
-  if (!slash.enabled) slash.enabled = true;
-  if (!slash.reload) slash.reload = true;
-  if (!slash.globalCommand) slash.globalCommand = true;
-  if (!slash.options) slash.options = [];
+  if (typeof config.enabled === 'undefined') config.enabled = true;
+  if (typeof config.required === 'undefined') config.required = true;
+  if (typeof config.clientPermissions === 'undefined') config.clientPermissions = [];
+  if (typeof config.userPermissions === 'undefined') config.userPermissions = [];
+  if (typeof config.throttling === 'undefined') config.throttling = false;
+  if (typeof config.nsfw === 'undefined') config.nsfw = false;
+  if (typeof slash.name === 'undefined') slash.name = splitPath[splitPath.length - 1].slice(0, -3);
+  if (typeof slash.category === 'undefined') slash.category = slash.category === 'commands' ? 'Uncategorized' : splitPath[splitPath.length - 2];
+  if (typeof slash.listeners === 'undefined') slash.listeners = [];
+  if (typeof slash.testCommand === 'undefined') slash.testCommand = false;
+  if (typeof slash.serverIds === 'undefined') slash.serverIds = [];
+  if (typeof slash.listeners === 'undefined') slash.listeners = [];
+  if (typeof slash.enabled === 'undefined') slash.enabled = true;
+  if (typeof slash.globalCommand === 'undefined') slash.globalCommand = true;
+  if (typeof slash.options === 'undefined') slash.options = [];
+  if (typeof slash.defaultPermission === 'undefined') slash.defaultPermission = true;
 
   config.path = path;
 
@@ -256,7 +313,6 @@ const slashTypes = {
   category: '',
   description: '',
   enabled: true,
-  reload: false,
   globalCommand: true,
   testCommand: true,
   serverIds: 'array',

@@ -47,7 +47,6 @@ exports.config = {
 exports.slash = {
   description: 'Test functionality with this command.',
   enabled: true,
-  reload: false,
   globalCommand: false,
   testCommand: true,
   serverIds: [
@@ -55,7 +54,13 @@ exports.slash = {
     '819994671929360414', // A Server the client isn't in
     '793894728847720468' // Support Server
   ],
-  options: [],
+  options: [
+    {
+      name: 'test',
+      description: 'false',
+      type: 'STRING'
+    }
+  ],
   listeners: [
     {
       customId: 'test_01',

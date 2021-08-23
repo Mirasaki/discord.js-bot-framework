@@ -137,7 +137,6 @@ exports.config = {
 exports.slash = {
   description: 'Get an overview on all the available commands!',
   enabled: true,
-  reload: false,
   globalCommand: true,
   testCommand: false,
   serverIds: [],

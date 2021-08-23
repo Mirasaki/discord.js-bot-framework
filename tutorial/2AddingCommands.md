@@ -36,15 +36,15 @@ exports.config = {
 ```javascript
 // Slash configuration
 exports.slash = {
-  name: String,           /* Optional | Default = filename without extension | The name this command is called by */
-  category: String,       /* Optional | Default = file parent folder name | The category this command falls under */
-  description: String,    /* Required | The provided description for this command */
-  enabled: Boolean,       /* Optional | Default = true | Whether or not this Slash Command is currently enabled */
-  reload: Boolean,        /* Optional | Default = true | Whether or not this Slash Command should be reloaded/re-registered on the next boot */
-  globalCommand: Boolean, /* Optional | Default = true | Whether or not this Slash Command is enabled globally */
-  testCommand: Boolean,   /* Optional | Default = false | Whether or not this Slash Command is also registered as a server-specific slash command on your test server (Defined in config/config.json) */
-  serverIds: Array,       /* Optional | Default = [] | Whether or not this Slash Command should be registered to specific servers, allowing only them access if globalCommand = false */
-  options: Array,         /* Optional | Default = [] | Slash Command data to send when registering/reload this command @ https://discord.js.org/#/docs/main/13.1.0/typedef/ApplicationCommandOptionData*/
+  name: String,             /* Optional | Default = filename without extension | The name this command is called by */
+  category: String,         /* Optional | Default = file parent folder name | The category this command falls under */
+  description: String,      /* Required | The provided description for this command */
+  defaultPermission: Boolean/* Optional | Default = true | Whether or not this Slash Command is available when the app is added to a server */
+  enabled: Boolean,         /* Optional | Default = true | Whether or not this Slash Command is currently enabled */
+  globalCommand: Boolean,   /* Optional | Default = true | Whether or not this Slash Command is enabled globally */
+  testCommand: Boolean,     /* Optional | Default = false | Whether or not this Slash Command is also registered as a server-specific slash command on your test server (Defined in config/config.json) */
+  serverIds: Array,         /* Optional | Default = [] | Whether or not this Slash Command should be registered to specific servers, allowing only them access if globalCommand = false */
+  options: Array,           /* Optional | Default = [] | Slash Command data to send when registering/reload this command @ https://discord.js.org/#/docs/main/13.1.0/typedef/ApplicationCommandOptionData*/
 
   // Optional | Default = [] | Set-up custom component listeners
   listeners: [            /* Custom MessageComponent Listeners */
