@@ -1,6 +1,6 @@
 {
   "response": {
-    "success": "✔️",
+    "success": "✅",
     "error": "⛔",
     "unknown": "❓",
     "wait": "⌛"
