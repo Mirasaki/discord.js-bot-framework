@@ -1,5 +1,5 @@
 #### A guide explaining and showing you how to work with listeners/events and adding new ones
-Check [here](https://discord.js.org/#/docs/main/13.1.0/class/Client?scrollTo=e-applicationCommandCreate) for a full list of all the available events your bot/client can listen to!
+Check [here](https://discord.js.org/#/docs/main/13.1.0/class/Client) for a full list of all the available events your bot/client can listen to!
 
 Before we start, in order to receive some events, you need the required [intents](https://discord.js.org/#/docs/main/13.1.0/class/Intents)
 

@@ -2,7 +2,7 @@
 > Making changes to ***global*** test commands can take up to 1 hour to process, this is because of Discord's API, not because of this framework. Please be patient when editing global commands and use test-server command or even server-specific commands if possible when actively working on a command!
 
 ## Adding a new command to the registery
-- Copy either the [full command template](./src/commands/.fullCommandTemplate.js) or [minimal template](/src/commands/.minimalCommandTemplate.js)
+- Copy either the [full command template](/src/commands/.fullCommandTemplate.js) or [minimal template](/src/commands/.minimalCommandTemplate.js)
 - Create a new file ***anywhere*** in the `src/commands` directory
   - The structure really doesn't matter, place it directly in the commands folder, any of it's sub-folders or even deep nested folders!
 - Paste the content and check/configure all the command options
