@@ -22,7 +22,7 @@ exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
 
   if (!options[0]) {
     return interaction.reply({
-      content: `${emojis.animated.attention} No commands are currently disabled!`
+      content: `${emojis.response.error} No commands are currently disabled!`
     })
   }
 
@@ -109,7 +109,7 @@ exports.slash = {
 
         if (!options[0]) {
           return interaction.update({
-            content: `${client.json.emojis.animated.attention} No commands are currently disabled!`,
+            content: `${client.json.emojis.response.error} No commands are currently disabled!`,
             embeds: [getEmbed(client, guild, guildSettings)],
             components: []
           })
@@ -144,7 +144,7 @@ exports.slash = {
       customId: 'enable_02',
       onClick: async function (client, interaction, guildSettings) {
         interaction.update({
-          content: `${client.json.emojis.animated.attention} This **/**enable menu has closed`,
+          content: `${client.json.emojis.response.error} This **/**enable menu has closed`,
           embeds: [getEmbed(client, interaction.guild, guildSettings)],
           components: []
         })

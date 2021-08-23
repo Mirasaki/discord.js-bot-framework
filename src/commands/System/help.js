@@ -43,7 +43,7 @@ exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
   const command = client.commands.get(commandName)
   if (!command) {
     return interaction.reply({
-      content: `${emojis.animated.attention} That's not a valid command!`,
+      content: `${emojis.response.error} That's not a valid command!`,
       ephemeral: true
     })
   }
@@ -70,11 +70,7 @@ exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
             config.nsfw === true
             ? `\n\n**SFW:** ${emojis.response.error}\n`
             : '\n\n'
-          }**Category:** ${
-            slash.category === 'System'
-            ? `${emojis.double.system1}${emojis.double.system2}`
-            : slash.category
-          }
+          }**Category:** ${slash.category}
           **Max Uses:** ${
             throttling
             ? `${
@@ -90,13 +86,13 @@ exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
           }
           **Slash Command:** ${
             slash && slash.enabled && slash.global
-            ? emojis.animated.on
-            : emojis.animated.off
+            ? emojis.response.success
+            : emojis.response.error
           }
           **Can Be Disabled:** ${
             config.required
-            ? emojis.animated.on
-            : emojis.animated.off
+            ? emojis.response.success
+            : emojis.response.error
           }
         `)
         .addField('My Permissions', `${

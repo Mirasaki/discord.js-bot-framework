@@ -23,13 +23,7 @@ exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
         } MB](https://discord.gg/JPeue456eD)
         **Discord.js Version:** [v${version}](https://discord.js.org/#/docs/main/12.3.1/general/welcome)
         **Node Version:** [${process.version}](https://nodejs.org/docs/latest-v12.x/api/#)
-        **API Latency:** ${
-          latency <= 150
-          ? `${emojis.connection.good}`
-          : latency <= 250
-            ? `${emojis.connection.average}`
-            : `${emojis.connection.bad}`
-        } ${latency} ms
+        **API Latency:** ${latency} ms
       `)
     ]
   })

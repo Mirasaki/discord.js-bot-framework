@@ -22,7 +22,7 @@ exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
 
   if (!options[0]) {
     return interaction.reply({
-      content: `${emojis.animated.attention} You've disabled all the commands that **can** be disabled, re-enable some with **/**enable!`,
+      content: `${emojis.response.error} You've disabled all the commands that **can** be disabled, re-enable some with **/**enable!`,
       embeds: [getEmbed(client, guild, guildSettings)]
     })
   }
@@ -111,7 +111,7 @@ exports.slash = {
 
         if (!options[0]) {
           return interaction.update({
-            content: `${client.json.emojis.animated.attention} You've disabled all the commands that **can** be disabled, re-enable some with **/**enable!`,
+            content: `${client.json.emojis.response.error} You've disabled all the commands that **can** be disabled, re-enable some with **/**enable!`,
             embeds: [getEmbed(client, guild, guildSettings)],
             components: []
           })
@@ -147,7 +147,7 @@ exports.slash = {
       customId: 'disable_02',
       onClick: async function (client, interaction, guildSettings) {
         interaction.update({
-          content: `${client.json.emojis.animated.attention} This **/**disable menu has closed`,
+          content: `${client.json.emojis.response.error} This **/**disable menu has closed`,
           embeds: [getEmbed(client, interaction.guild, guildSettings)],
           components: []
         })
