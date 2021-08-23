@@ -5,7 +5,7 @@ exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
   interaction.reply({
     content: `${emojis.response.error} No test is currently active!`,
     ephemeral: true
-  })
+  });
 
   // interaction.reply({
   //   content: humanTimeToMS('51w6d23h59m59s')
@@ -29,7 +29,7 @@ exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
   //       )
   //   ]
   // })
-}
+};
 
 exports.config = {
   enabled: true,
@@ -42,7 +42,7 @@ exports.config = {
     duration: 5
   },
   nsfw: true
-}
+};
 
 exports.slash = {
   description: 'Test functionality with this command.',
@@ -64,4 +64,4 @@ exports.slash = {
       }
     }
   ]
-}
+};

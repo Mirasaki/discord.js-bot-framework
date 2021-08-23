@@ -1,29 +1,29 @@
-const { reloadCommand } = require('../../handlers/commands')
+const { reloadCommand } = require('../../handlers/commands');
 
 exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
-  const commandName = args[0].value
-  const command = client.commands.get(commandName)
+  const commandName = args[0].value;
+  const command = client.commands.get(commandName);
 
   if (!command) {
     return interaction.reply({
       content: `${emojis.response.error} That is not a valid command!`,
       ephemeral: true
-    })
+    });
   }
 
   try {
-    reloadCommand(client, command)
+    reloadCommand(client, command);
     interaction.reply({
       content: `${emojis.response.success} Successfully reloaded **${command.slash.name}**!`
-    })
+    });
   } catch (err) {
     interaction.reply({
       content: `${emojis.response.error} An error has occured while re-loading **${command.slash.name}**, click to reveal:\n\n||${err.stack || err}||`,
       ephemeral: true
-    })
-    console.log(err.stack || err)
+    });
+    console.log(err.stack || err);
   }
-}
+};
 
 exports.config = {
   enabled: true,
@@ -35,7 +35,7 @@ exports.config = {
     usages: 1,
     duration: 5
   }
-}
+};
 
 exports.slash = {
   description: 'Reload a command',
@@ -60,4 +60,4 @@ exports.slash = {
       }
     }
   ]
-}
+};

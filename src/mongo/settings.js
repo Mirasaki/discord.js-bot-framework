@@ -1,5 +1,5 @@
-const { Schema, model } = require('mongoose')
-const TIME_IN_ONE_HOUR = 1000 * 60 * 60
+const { Schema, model } = require('mongoose');
+const TIME_IN_ONE_HOUR = 1000 * 60 * 60;
 
 const settingSchema = Schema({
   _guildId: { type: String, required: true },
@@ -13,40 +13,40 @@ const settingSchema = Schema({
     restrictCmds: { type: String, default: '' }
   },
   disabledCmds: { type: Array, default: [] }
-})
+});
 
-const GuildModel = model('settings', settingSchema)
-module.exports.GuildModel = GuildModel
+const GuildModel = model('settings', settingSchema);
+module.exports.GuildModel = GuildModel;
 
-module.exports.settingsCache = new Map()
+module.exports.settingsCache = new Map();
 
 module.exports.getSettingsCache = async (guildId) => {
-  let data = this.settingsCache.get(guildId)
+  let data = this.settingsCache.get(guildId);
   if (!this.settingsCache.has(guildId)) {
-    const guildSettings = await getSettingsFromDB(guildId)
-    data = guildSettings
-    this.settingsCache.set(guildId, data)
+    const guildSettings = await getSettingsFromDB(guildId);
+    data = guildSettings;
+    this.settingsCache.set(guildId, data);
   }
-  cacheTimeout(guildId)
-  return data
-}
+  cacheTimeout(guildId);
+  return data;
+};
 
 const getSettingsFromDB = async (_guildId) => {
-  let guildSettings
+  let guildSettings;
   try {
-    guildSettings = await GuildModel.findOne({ _guildId })
+    guildSettings = await GuildModel.findOne({ _guildId });
     if (!guildSettings) {
-      const newData = new GuildModel({ _guildId })
-      guildSettings = await newData.save()
+      const newData = new GuildModel({ _guildId });
+      guildSettings = await newData.save();
     }
   } catch (err) {
-    return console.log(err)
+    return console.log(err);
   }
-  return guildSettings
-}
+  return guildSettings;
+};
 
 const cacheTimeout = (guildId) => {
   setTimeout(() => {
-    this.settingsCache.delete(guildId)
-  }, TIME_IN_ONE_HOUR)
-}
+    this.settingsCache.delete(guildId);
+  }, TIME_IN_ONE_HOUR);
+};

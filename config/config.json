@@ -1,6 +1,6 @@
 {
   "links": {
-    "botInvite": "https://discord.com/api/oauth2/authorize?client_id=869913459641421844&permissions=8&scope=bot%20applications.commands",
+    "botInvite": "https://discord.com/api/oauth2/authorize?client_id={{clientId}}&permissions=8&scope=bot%20applications.commands",
     "supportServer": "https://discord.gg/KfHFhGNPvz"
   },
   "ids": {

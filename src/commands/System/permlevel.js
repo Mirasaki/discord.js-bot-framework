@@ -1,16 +1,16 @@
-const { MessageEmbed } = require('discord.js')
+const { MessageEmbed } = require('discord.js');
 
 exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
-  const { member } = interaction
-  const { permissionLevel, permissionName } = member.perms
+  const { member } = interaction;
+  const { permissionLevel, permissionName } = member.perms;
   interaction.reply({
     embeds: [
       new MessageEmbed()
         .setColor('WHITE')
         .setDescription(`${member.toString()}, your permission level is: __${permissionLevel}__ - **${permissionName}**`)
     ]
-  })
-}
+  });
+};
 
 exports.config = {
   enabled: true,
@@ -18,7 +18,7 @@ exports.config = {
   permLevel: 'User',
   clientPermissions: ['EMBED_LINKS'],
   userPermissions: []
-}
+};
 
 exports.slash = {
   description: 'Tells you your permission level for executing bot commands.',
@@ -28,4 +28,4 @@ exports.slash = {
   testCommand: false,
   serverIds: [],
   options: []
-}
+};

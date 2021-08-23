@@ -1,29 +1,28 @@
-const { getFiles } = require('../utils/tools')
-const nodePath = require('path')
+const { getFiles } = require('../utils/tools');
+const nodePath = require('path');
 
-module.exports.initializeListeners = (client, counter = 0) => {
-  const loadedListeners = []
-  console.log('Initializing listeners:')
+module.exports.initializeListeners = (client) => {
+  const loadedListeners = [];
+  console.log('Initializing listeners:');
   for (let path of getFiles(process.env.EVENTS_PATH || 'src/listeners', '.js')) {
-    path = path.replaceAll(nodePath.sep, '/')
-    const event = require(path)
-    const eventName = path.slice(path.lastIndexOf('/') + 1, path.length - 3)
-    const check = loadedListeners.find((e) => e.name === eventName)
-    const thisObj = { name: eventName, origin: path }
-    if (!this.validEvents.includes(eventName)) throw new TypeError(`Invalid Event name provided at ${path}!`)
-    if (check) throw new Error(`Duplicate Event: ${eventName} already loaded/bound!\nOriginal event: ${check.origin}\nRequested event: ${path}`)
-    counter++
-    loadedListeners.push(thisObj)
-    client.on(eventName, (...received) => event(client, ...received))
+    path = path.replaceAll(nodePath.sep, '/');
+    const event = require(path);
+    const eventName = path.slice(path.lastIndexOf('/') + 1, path.length - 3);
+    const check = loadedListeners.find((e) => e.name === eventName);
+    const thisObj = { name: eventName, origin: path };
+    if (!this.validEvents.includes(eventName)) throw new TypeError(`Invalid Event name provided at ${path}!`);
+    if (check) throw new Error(`Duplicate Event: ${eventName} already loaded/bound!\nOriginal event: ${check.origin}\nRequested event: ${path}`);
+    loadedListeners.push(thisObj);
+    client.on(eventName, (...received) => event(client, ...received));
     console.log(`    ${loadedListeners.indexOf(thisObj) + 1} ${eventName}: ${
       thisObj.origin.slice(
         thisObj.origin
-        .indexOf(process.env.EVENTS_PATH
-      ), thisObj.origin.length
-    )}`)
+          .indexOf(process.env.EVENTS_PATH
+          ), thisObj.origin.length
+      )}`);
   }
-  console.log('Finished initializing listeners!\n')
-}
+  console.log('Finished initializing listeners!\n');
+};
 
 module.exports.validEvents = [
   'applicationCommandCreate',
@@ -102,4 +101,4 @@ module.exports.validEvents = [
   'commandInteraction',
   'componentInteraction',
   'selectMenuInteraction'
-]
+];

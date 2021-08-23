@@ -1,24 +1,24 @@
-const { MessageEmbed } = require('discord.js')
+const { MessageEmbed } = require('discord.js');
 const readableSettings = {
   modRole: 'Moderator Role',
   adminRole: 'Administrator Role',
   permissionNotice: 'Permission Notice',
   modLog: 'Moderator Log',
   restrictCmds: 'Command Channel'
-}
-const { settingsCache } = require('../../mongo/settings')
+};
+const { settingsCache } = require('../../mongo/settings');
 
 exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
-  const { guild } = interaction
+  const { guild } = interaction;
 
   if (args[0].name === 'action') {
-    const action = args[0].options[0].name
+    const action = args[0].options[0].name;
     if (action === 'view') {
       const settingsEmbed = new MessageEmbed()
         .setColor(client.json.colors.main)
-        .setAuthor(`Essential Settings for ${guild.name}!`, guild.iconURL({ dynamic: true }))
+        .setAuthor(`Essential Settings for ${guild.name}!`, guild.iconURL({ dynamic: true }));
 
-      let counter = 0
+      let counter = 0;
 
       Object.entries(guildSettings._doc).forEach(([key, value]) => {
         if (
@@ -26,117 +26,119 @@ exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
           || key === '_guildId'
           || key === '__v'
           || key === '_id'
-        ) return
+        ) return;
         if (
           typeof value === 'object'
         ) {
           Object.entries(value).forEach(([subKey, subValue]) => {
-            if (subKey === '$init') return
-            counter++
-            addField(interaction, settingsEmbed, subKey, subValue, counter)
-          })
+            if (subKey === '$init') return;
+            counter++;
+            addField(interaction, settingsEmbed, subKey, subValue, counter);
+          });
         } else {
-          counter++
-          addField(interaction, settingsEmbed, key, value, counter)
+          counter++;
+          addField(interaction, settingsEmbed, key, value, counter);
         }
-      })
+      });
 
-      interaction.reply({ embeds: [settingsEmbed] })
+      interaction.reply({ embeds: [settingsEmbed] });
     // Reset
     } else {
-      guildSettings.delete()
-      settingsCache.delete(guild.id)
+      guildSettings.delete();
+      settingsCache.delete(guild.id);
       interaction.reply({
         content: `${emojis.response.success} Successfully reset your server's settings!`,
         ephemeral: true
-      })
+      });
     }
-    return
+    return;
   }
 
-  const requested = args[0].options[0].name
-  const newValue = args[0].options[0] ? args[0].options[0].options[0].value : false
+  const requested = args[0].options[0].name;
+  const newValue = args[0].options[0] ? args[0].options[0].options[0].value : false;
   switch (requested) {
     case 'modrole': {
-      if (guildSettings.permissions.modRole === newValue) return replySameValue(interaction, 'modRole')
-      guildSettings.permissions.modRole = newValue
-      await guildSettings.save()
-      returnUpdated(interaction, 'modRole', guild.roles.cache.get(newValue).name)
-      break
+      if (guildSettings.permissions.modRole === newValue) return replySameValue(interaction, 'modRole');
+      guildSettings.permissions.modRole = newValue;
+      await guildSettings.save();
+      returnUpdated(interaction, 'modRole', guild.roles.cache.get(newValue).name);
+      break;
     }
 
     case 'adminrole': {
-      if (guildSettings.permissions.adminRole === newValue) return replySameValue(interaction, 'adminRole')
-      guildSettings.permissions.adminRole = newValue
-      await guildSettings.save()
-      returnUpdated(interaction, 'adminRole', guild.roles.cache.get(newValue).name)
-      break
+      if (guildSettings.permissions.adminRole === newValue) return replySameValue(interaction, 'adminRole');
+      guildSettings.permissions.adminRole = newValue;
+      await guildSettings.save();
+      returnUpdated(interaction, 'adminRole', guild.roles.cache.get(newValue).name);
+      break;
     }
 
     case 'notice': {
-      if (guildSettings.permissions.permissionNotice === newValue) return replySameValue(interaction, 'permissionNotice')
-      guildSettings.permissions.permissionNotice = newValue
-      await guildSettings.save()
-      returnUpdated(interaction, 'permissionNotice', newValue)
-      break
+      if (guildSettings.permissions.permissionNotice === newValue) return replySameValue(interaction, 'permissionNotice');
+      guildSettings.permissions.permissionNotice = newValue;
+      await guildSettings.save();
+      returnUpdated(interaction, 'permissionNotice', newValue);
+      break;
     }
 
     case 'modlog': {
-      if (guildSettings.channels.modLog === newValue) return replySameValue(interaction, 'modLog')
-      const channel = guild.channels.cache.get(newValue)
+      if (guildSettings.channels.modLog === newValue) return replySameValue(interaction, 'modLog');
+      const channel = guild.channels.cache.get(newValue);
       if (channel.type !== 'GUILD_TEXT') {
         return interaction.reply({
           content: `${emojis.response.error} Provide a text channel instead!`,
           ephemeral: true
-        })
+        });
       }
-      guildSettings.channels.modLog = newValue
-      await guildSettings.save()
-      returnUpdated(interaction, 'modLog', channel.name)
-      break
+      guildSettings.channels.modLog = newValue;
+      await guildSettings.save();
+      returnUpdated(interaction, 'modLog', channel.name);
+      break;
     }
 
     case 'command': {
-      if (guildSettings.channels.restrictCmds === newValue) return replySameValue(interaction, 'commandChannel')
-      const channel = guild.channels.cache.get(newValue)
+      if (guildSettings.channels.restrictCmds === newValue) return replySameValue(interaction, 'commandChannel');
+      const channel = guild.channels.cache.get(newValue);
       if (channel.type !== 'GUILD_TEXT') {
         return interaction.reply({
           content: `${emojis.response.error} Provide a text channel instead!`,
           ephemeral: true
-        })
+        });
       }
-      guildSettings.channels.restrictCmds = newValue
-      await guildSettings.save()
-      returnUpdated(interaction, 'commandChannel', channel.name)
-      break
+      guildSettings.channels.restrictCmds = newValue;
+      await guildSettings.save();
+      returnUpdated(interaction, 'commandChannel', channel.name);
+      break;
     }
+
+    default: break;
   }
-}
+};
 
 const replySameValue = (interaction, setting) => {
   return interaction.reply({
     content: `Setting "${setting}" already has that value!`,
     ephemeral: true
-  })
-}
+  });
+};
 
 const returnUpdated = (interaction, setting, newValue) => {
   return interaction.reply({
     content: `Setting \`${setting}\` successfully updated to **${newValue}**!`,
     ephemeral: true
-  })
-}
+  });
+};
 
 const addField = (interaction, embed, key, value, counter) => {
-  const channel = interaction.guild.channels.cache.get(value)
-  const role = interaction.guild.roles.cache.get(value)
-  if (channel || role) return embed.addField(`__${counter}__ ${readableSettings[key]}`, `${role ? `${role.toString()}` : `${channel.toString()}`}`, false)
+  const channel = interaction.guild.channels.cache.get(value);
+  const role = interaction.guild.roles.cache.get(value);
+  if (channel || role) return embed.addField(`__${counter}__ ${readableSettings[key]}`, `${role ? `${role.toString()}` : `${channel.toString()}`}`, false);
   if (typeof value === 'boolean' || value === 'true' || value === 'false') {
-    embed.addField(`__${counter}__ ${readableSettings[key]}`, `${value === true ? '✅ Enabled' : '⛔ Disabled'}`, false)
+    embed.addField(`__${counter}__ ${readableSettings[key]}`, `${value === true ? '✅ Enabled' : '⛔ Disabled'}`, false);
   } else {
-    embed.addField(`__${counter}__ ${readableSettings[key]}`, `${!value ? 'None!' : `${value}`}`, false)
+    embed.addField(`__${counter}__ ${readableSettings[key]}`, `${!value ? 'None!' : `${value}`}`, false);
   }
-}
+};
 
 exports.config = {
   enabled: true,
@@ -148,7 +150,7 @@ exports.config = {
     usages: 2,
     duration: 5
   }
-}
+};
 
 exports.slash = {
   description: 'Configure the permission levels for your server, this determines what commands members can use',
@@ -266,4 +268,4 @@ exports.slash = {
       }
     }
   ]
-}
+};

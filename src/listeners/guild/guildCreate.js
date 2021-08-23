@@ -1,12 +1,12 @@
-const { MessageEmbed } = require('discord.js')
-const { logger } = require('../../handlers/logger')
-const { parseSnakeCaseArray, getTimeSince } = require('../../utils/tools')
+const { MessageEmbed } = require('discord.js');
+const { logger } = require('../../handlers/logger');
+const { parseSnakeCaseArray, getTimeSince } = require('../../utils/tools');
 
 module.exports = async (client, guild) => {
-  if (!guild.available) return
-  const channel = client.channels.cache.get(client.json.config.ids.serverJoinLeaveChannel)
-  if (!channel || channel.type !== 'GUILD_TEXT') return
-  logger.info(`[GUILD JOIN] ${guild.name} has added the bot! Members: ${guild.memberCount}`)
+  if (!guild.available) return;
+  const channel = client.channels.cache.get(client.json.config.ids.serverJoinLeaveChannel);
+  if (!channel || channel.type !== 'GUILD_TEXT') return;
+  logger.info(`[GUILD JOIN] ${guild.name} has added the bot! Members: ${guild.memberCount}`);
   await channel.send({
     embeds: [
       new MessageEmbed({
@@ -23,5 +23,5 @@ module.exports = async (client, guild) => {
           getTimeSince(guild.createdAt)
         } Ago`)
     ]
-  })
-}
+  });
+};

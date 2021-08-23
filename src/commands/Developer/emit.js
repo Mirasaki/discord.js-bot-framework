@@ -1,33 +1,34 @@
-const { validEvents } = require('../../handlers/listeners')
+const { validEvents } = require('../../handlers/listeners');
 
 exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
   if (!args[0]) {
     return interaction.reply({
       content: `${emojis.response.error} Include one of the available events!`,
       ephemeral: true
-    })
+    });
   }
 
-  const { channel, guild, member, user } = interaction
-  const role = member.roles.cache.random() || null
-  const event = args[0].value
+  const { channel, guild, member, user } = interaction;
+  const role = member.roles.cache.random() || null;
+  const event = args[0].value;
 
   const getObj = (str) => {
     switch (str) {
-      case 'channel': return channel
-      case 'guild': return guild
-      case 'member': return member
-      case 'user': return user
-      case 'role': return role
+      case 'channel': return channel;
+      case 'guild': return guild;
+      case 'member': return member;
+      case 'user': return user;
+      case 'role': return role;
+      default: break;
     }
-  }
+  };
 
-  client.emit(event, getObj(args[0]), getObj(args[1]), getObj(args[2]))
+  client.emit(event, getObj(args[0]), getObj(args[1]), getObj(args[2]));
   interaction.reply({
     content: `${emojis.response.success} Successfully emitted ${event}`,
     ephemeral: true
-  })
-}
+  });
+};
 
 exports.config = {
   enabled: true,
@@ -35,17 +36,17 @@ exports.config = {
   permLevel: 'Bot Administrator',
   clientPermissions: [],
   userPermissions: []
-}
+};
 
-const eventsData = []
+const eventsData = [];
 validEvents.filter((event) => (
   !event.match(/messageReaction|interaction|application|channelPins/)
 )).forEach((event) => {
   eventsData.push({
     name: event.toLowerCase(),
     value: event
-  })
-})
+  });
+});
 
 exports.slash = {
   description: 'Emit a discord.js event to the client',
@@ -74,4 +75,4 @@ exports.slash = {
       choices: eventsData.slice(50, eventsData.length)
     }
   ]
-}
+};

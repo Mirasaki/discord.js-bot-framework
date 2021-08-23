@@ -1,23 +1,23 @@
-const chalk = require('chalk')
-const moment = require('moment')
-const { createLogger: CreateLogger, format, transports, addColors } = require('winston')
-const { combine, timestamp, prettyPrint, colorize, printf } = format
+const chalk = require('chalk');
+const moment = require('moment');
+const { createLogger: CreateLogger, format, transports, addColors } = require('winston');
+const { combine, timestamp, prettyPrint, colorize, printf } = format;
 
 const customFormat = combine(
   timestamp(),
   prettyPrint()
-)
+);
 const colors = {
   error: 'redBG bold white',
   warn: 'redBG black',
   info: 'blueBG white'
-}
-addColors(colors)
+};
+addColors(colors);
 
-const date = new Date().toLocaleTimeString()
+const date = new Date().toLocaleTimeString();
 const logFormat = printf(function (info) {
-  return `${date}-${info.level}: ${JSON.stringify(info.message, null, 4)}\n`
-})
+  return `${date}-${info.level}: ${JSON.stringify(info.message, null, 4)}\n`;
+});
 
 exports.logger = CreateLogger({
   transports: [
@@ -55,20 +55,20 @@ exports.logger = CreateLogger({
       filename: 'logs/combined.log'
     })
   ]
-})
+});
 
 exports.log = (content, type = 'log') => {
-  const timestamp = `[${chalk.yellowBright(`${moment().format('MM-DD HH:mm:ss')}`)}]`
-  let str = `${timestamp} `
+  const timestamp = `[${chalk.yellowBright(`${moment().format('MM-DD HH:mm:ss')}`)}]`;
+  let str = `${timestamp} `;
   switch (type) {
-    case 'log': str += `${chalk.bgBlue(type.toUpperCase())}`; break
-    case 'error': str += `${chalk.bgRed(type.toUpperCase())}`; break
-    case 'debug': str += `${chalk.bgMagenta(type.toUpperCase())}`; break
-    case 'warning': str += `${chalk.bgRed(type.toUpperCase())}`; break
-    case 'slash': str += `${chalk.black.bgWhite(type.toUpperCase())}`; break
-    case 'success': str += `${chalk.bgGreen(type.toUpperCase())}`; break
-    case 'info': str += `${chalk.bgWhite(type.toUpperCase())}`; break
-    case 'blank': str = str.slice(0, -1); break
+    case 'log': str += `${chalk.bgBlue(type.toUpperCase())}`; break;
+    case 'error': str += `${chalk.bgRed(type.toUpperCase())}`; break;
+    case 'debug': str += `${chalk.bgMagenta(type.toUpperCase())}`; break;
+    case 'warning': str += `${chalk.bgRed(type.toUpperCase())}`; break;
+    case 'slash': str += `${chalk.black.bgWhite(type.toUpperCase())}`; break;
+    case 'success': str += `${chalk.bgGreen(type.toUpperCase())}`; break;
+    case 'info': str += `${chalk.bgWhite(type.toUpperCase())}`; break;
+    case 'blank': str = str.slice(0, -1); break;
     default: throw new TypeError(`Unknown type provided! Must be one of: [
       ${chalk.bgBlue('log')},
       ${chalk.bgRedBright('error')},
@@ -79,8 +79,8 @@ exports.log = (content, type = 'log') => {
       ${chalk.bgGreen('success')},
       ${chalk.black.bgWhite('info')},
       blank
-  ]`)
+    ]`);
   }
-  str += ` ${content}`
-  console.log(str)
-}
+  str += ` ${content}`;
+  console.log(str);
+};

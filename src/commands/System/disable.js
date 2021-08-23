@@ -1,11 +1,11 @@
-const { MessageEmbed, MessageSelectMenu, MessageActionRow, MessageButton } = require('discord.js')
-const { permLevels } = require('../../handlers/permissions')
+const { MessageEmbed, MessageSelectMenu, MessageActionRow, MessageButton } = require('discord.js');
+const { permLevels } = require('../../handlers/permissions');
 
 exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
-  const { member, guild } = interaction
-  const disabledCommands = guildSettings.disabledCmds
+  const { member, guild } = interaction;
+  const disabledCommands = guildSettings.disabledCmds;
 
-  const options = []
+  const options = [];
   client.commands.filter((cmd) =>
     member.perms.permissionLevel >= permLevels[cmd.config.permLevel]
     &&
@@ -17,14 +17,14 @@ exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
       label: cmd.slash.name,
       description: cmd.slash.description.length > 50 ? cmd.slash.description.slice(0, 46) + '...' : cmd.slash.description,
       value: cmd.slash.name
-    })
-  })
+    });
+  });
 
   if (!options[0]) {
     return interaction.reply({
       content: `${emojis.response.error} You've disabled all the commands that **can** be disabled, re-enable some with **/**enable!`,
       embeds: [getEmbed(client, guild, guildSettings)]
-    })
+    });
   }
 
   interaction.reply({
@@ -49,8 +49,8 @@ exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
           })
         )
     ]
-  })
-}
+  });
+};
 
 const getEmbed = (client, guild, settings) => {
   return new MessageEmbed()
@@ -58,10 +58,10 @@ const getEmbed = (client, guild, settings) => {
     .setAuthor(`All disabled commands for ${guild.name}`, guild.iconURL({ dynamic: true }))
     .setDescription(`${
       settings.disabledCmds[0]
-      ? `\`${settings.disabledCmds.join('`, `')}\``
-      : `${client.json.emojis.response.error} None!`
-    }`)
-}
+        ? `\`${settings.disabledCmds.join('`, `')}\``
+        : `${client.json.emojis.response.error} None!`
+    }`);
+};
 
 exports.config = {
   enabled: true,
@@ -73,7 +73,7 @@ exports.config = {
     usages: 2,
     duration: 5
   }
-}
+};
 
 exports.slash = {
   description: 'Disable specific commands. This only applies to the server the command is called in.',
@@ -87,14 +87,14 @@ exports.slash = {
     {
       customId: 'disable_01',
       onClick: async function (client, interaction, guildSettings) {
-        const { values, guild, member } = interaction
-        const { disabledCmds } = guildSettings
+        const { values, guild, member } = interaction;
+        const { disabledCmds } = guildSettings;
         values
           .filter((cmdName) => !disabledCmds.includes(cmdName))
-          .forEach((cmdName) => disabledCmds.push(cmdName))
-        await guildSettings.save()
+          .forEach((cmdName) => disabledCmds.push(cmdName));
+        await guildSettings.save();
 
-        const options = []
+        const options = [];
         client.commands.filter((cmd) =>
           member.perms.permissionLevel >= permLevels[cmd.config.permLevel]
           &&
@@ -106,15 +106,15 @@ exports.slash = {
             label: cmd.slash.name,
             description: cmd.slash.description.length > 50 ? cmd.slash.description.slice(0, 46) + '...' : cmd.slash.description,
             value: cmd.slash.name
-          })
-        })
+          });
+        });
 
         if (!options[0]) {
           return interaction.update({
             content: `${client.json.emojis.response.error} You've disabled all the commands that **can** be disabled, re-enable some with **/**enable!`,
             embeds: [getEmbed(client, guild, guildSettings)],
             components: []
-          })
+          });
         }
 
         interaction.update({
@@ -140,7 +140,7 @@ exports.slash = {
                 })
               )
           ]
-        })
+        });
       }
     },
     {
@@ -150,8 +150,8 @@ exports.slash = {
           content: `${client.json.emojis.response.error} This **/**disable menu has closed`,
           embeds: [getEmbed(client, interaction.guild, guildSettings)],
           components: []
-        })
+        });
       }
     }
   ]
-}
+};

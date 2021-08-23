@@ -1,12 +1,12 @@
 require('dotenv').config({
   path: 'config/.env'
-})
+});
 
-const { Client, Intents } = require('discord.js')
-const { validateCommands } = require('./handlers/commands.js')
-const { initializeListeners } = require('./handlers/listeners.js')
-const { log } = require('./handlers/logger.js')
-const { getFiles } = require('./utils/tools.js')
+const { Client, Intents } = require('discord.js');
+const { validateCommands } = require('./handlers/commands.js');
+const { initializeListeners } = require('./handlers/listeners.js');
+const { log } = require('./handlers/logger.js');
+const { getFiles } = require('./utils/tools.js');
 const nodePath = require('path');
 
 (async () => {
@@ -21,15 +21,15 @@ const nodePath = require('path');
       Intents.FLAGS.GUILD_MEMBERS
     ],
     fetchAllMembers: true
-  })
-  validateCommands(client)
-  initializeListeners(client)
+  });
+  validateCommands(client);
+  initializeListeners(client);
   // await require('./mongo/connection')()
-  client.json = {}
+  client.json = {};
   for (let path of getFiles('config/', '.json')) {
-    path = path.replaceAll(nodePath.sep, '/')
-    client.json[path.slice(path.lastIndexOf('/') + 1, path.length - 5)] = require(path)
+    path = path.replaceAll(nodePath.sep, '/');
+    client.json[path.slice(path.lastIndexOf('/') + 1, path.length - 5)] = require(path);
   }
-  log('Bound config/*.json to client.json', 'success')
-  log('Successfully initialized and completed test!', 'success')
-})()
+  log('Bound config/*.json to client.json', 'success');
+  log('Successfully initialized and completed test!', 'success');
+})();
