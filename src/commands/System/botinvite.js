@@ -18,7 +18,8 @@ exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
 };
 
 exports.config = {
-  permLevel: 'User'
+  permLevel: 'User',
+  clientPermissions: ['EMBED_LINKS']
 };
 
 exports.slash = {
