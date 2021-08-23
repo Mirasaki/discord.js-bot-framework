@@ -1,4 +1,6 @@
 {
+  // Inspired by best practices from https://github.com/vercel/next.js/blob/canary/.eslintrc.json
+  // and https://github.com/AnIdiotsGuide/guidebot/blob/master/.eslintrc.json
   "root": true,
   "env": {
     "commonjs": true,
