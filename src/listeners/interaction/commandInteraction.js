@@ -2,7 +2,6 @@ const { permConfig, checkCommandPermissions, hasChannelPerms } = require('../../
 const { throttleCommand } = require('../../mongo/throttling')
 const { log } = require('../../handlers/logger')
 const { parseSnakeCaseArray } = require('../../utils/tools')
-const defaultCommandPermissions = ['USE_EXTERNAL_EMOJIS', 'EMBED_LINKS']
 
 module.exports = async (client, interaction, guildSettings) => {
   const { member, guild, user, channel } = interaction
@@ -17,7 +16,7 @@ module.exports = async (client, interaction, guildSettings) => {
     || hasChannelPerms(member.user.id, channel, ['VIEW_CHANNEL', 'SEND_MESSAGES']) !== true
   ) return
 
-  const defaultPerms = hasChannelPerms(client.user.id, channel, defaultCommandPermissions)
+  const defaultPerms = hasChannelPerms(client.user.id, channel, client.json.config.permissions.defaultRequiredPermissions)
   if (defaultPerms !== true) {
     return interaction.reply({
       content: `${client.json.emojis.response.error} I lack the required channel permission${
@@ -31,7 +30,6 @@ module.exports = async (client, interaction, guildSettings) => {
     })
   }
 
-  // split at any amount of repeating spaces or \u200b
   const args = interaction.options.data
   const commandName = interaction.commandName
   const cmd = client.commands.get(commandName)
