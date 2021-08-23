@@ -27,7 +27,9 @@ module.exports.getSettingsCache = async (guildId) => {
     data = guildSettings;
     this.settingsCache.set(guildId, data);
   }
-  cacheTimeout(guildId);
+  setTimeout(() => {
+    this.settingsCache.delete(guildId);
+  }, TIME_IN_ONE_HOUR);
   return data;
 };
 
@@ -43,10 +45,4 @@ const getSettingsFromDB = async (_guildId) => {
     return console.log(err);
   }
   return guildSettings;
-};
-
-const cacheTimeout = (guildId) => {
-  setTimeout(() => {
-    this.settingsCache.delete(guildId);
-  }, TIME_IN_ONE_HOUR);
 };
