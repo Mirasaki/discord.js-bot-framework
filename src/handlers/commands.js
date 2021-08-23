@@ -139,13 +139,25 @@ const validateCommand = (client, cmd, path) => {
   const commandNameFromFile = splitPath[splitPath.length - 1].slice(0, -3)
   const commandCategoryFromFile = splitPath[splitPath.length - 2]
 
-  if (!slash.name) slash.name = commandNameFromFile
-  if (!slash.category) slash.category = slash.category === 'commands' ? 'Uncategorized' : commandCategoryFromFile
-  if (!slash.listeners) slash.listeners = []
+  if (!config.enabled) config.enabled = true
+  if (!config.required) config.required = true
   if (!config.clientPermissions) config.clientPermissions = []
   if (!config.userPermissions) config.userPermissions = []
   if (!config.throttling) config.throttling = false
   if (!config.nsfw) config.nsfw = false
+
+  if (!slash.name) slash.name = commandNameFromFile
+  if (!slash.category) slash.category = slash.category === 'commands' ? 'Uncategorized' : commandCategoryFromFile
+  if (!slash.listeners) slash.listeners = []
+  if (!slash.testCommand) slash.testCommand = false
+  if (!slash.serverIds) slash.serverIds = []
+  if (!slash.listeners) slash.listeners = []
+  if (!slash.enabled) slash.enabled = true
+  if (!slash.reload) slash.reload = true
+  if (!slash.globalCommand) slash.globalCommand = true
+  if (!slash.options) slash.options = []
+
+  
   config.path = path
 
   const thisObj = { name: slash.name, origin: path }
@@ -154,13 +166,13 @@ const validateCommand = (client, cmd, path) => {
   if (check) throw new Error(`CommandExportsValidationError:\nDuplicate Command: ${slash.name} already registered!\nOriginal command: ${check.origin}\nRequested event: ${path}`)
   tempCommands.push(thisObj)
   const logStr = `    ${
-      config.enabled === false
-      ? 'X'
-      : tempCommands.indexOf(thisObj) + 1
-    } ${slash.name}: ${thisObj.origin.slice(
-      thisObj.origin
-      .indexOf(process.env.COMMANDS_PATH), thisObj.origin.length
-    )}`
+    config.enabled === false
+    ? 'X'
+    : tempCommands.indexOf(thisObj) + 1
+  } ${slash.name}: ${thisObj.origin.slice(
+    thisObj.origin
+    .indexOf(process.env.COMMANDS_PATH), thisObj.origin.length
+  )}`
   if (
     config
     && config.enabled === false
