@@ -32,7 +32,7 @@ exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
 exports.config = {
   enabled: true,
   required: false,
-  permLevel: 'Developer',
+  permLevel: 'Bot Administrator',
   clientPermissions: [],
   userPermissions: []
 }
