@@ -6,9 +6,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/7090099b5a5d4a1c9bd83602b326fa82)](https://app.codacy.com/gh/Destinovant/discord.js-bot-framework?utm_source=github.com&utm_medium=referral&utm_content=Destinovant/discord.js-bot-framework&utm_campaign=Badge_Grade_Settings)
 
-This is a framework build on top of [discord.js](https://github.com/discordjs/discord.js "discord.js on Github") for quickly and easily creating powerful [Discord](https://discord.com/ "Official Discord Website") bots. You don't need much Javascript experience to get started on a project using this framework, if you want to quickly add new commands, check out [this guide to adding new commands](https://github.com/Destinovant/discord.js-bot-framework/tree/main/tutorial/AddingCommands.md). Still not sure where to start? Come join my [Discord Server](https://discord.gg/V8N5QqD8qX), where I'll try and answer all the questions you have.
+This is a framework build on top of [discord.js](https://github.com/discordjs/discord.js "discord.js on Github") for quickly and easily creating powerful [Discord](https://discord.com/ "Official Discord Website") bots. You don't need much Javascript experience to get started on a project using this framework, if you want to quickly add new commands, check out [this guide to adding new commands](./tutorial/2AddingCommands.md). Still not sure where to start? Come join my [Discord Server](https://discord.gg/V8N5QqD8qX), where I'll try and answer all the questions you have.
 
-Zero to none experience with Javascript? Check out [this page](https://github.com/Destinovant/discord.js-bot-framework/tree/main/tutorial/GettingStarted.md) where you can follow along step-by-step to create your own Discord bot **using this framework**.
+Zero to none experience with Javascript? Check out [this page](./tutorial/1GettingStarted.md) where you can follow along step-by-step to create your own Discord bot **using this framework**.
 </div>
 
 ---
@@ -36,4 +36,4 @@ Incomplete | Notes
 ## Extras
 Complete | Notes
 -------- | -----
-✅ Message Components | Buttons and Select Menus are fully integrated in your custom commands! Define your components when replying to an interaction, add a custom listener in the command configuration and have every aspect of your command in the same file. Check [this guide](https://github.com/Destinovant/discord.js-bot-framework/tree/main/tutorial/ComponentInteractions.md) to get started with components!
+✅ Message Components | Buttons and Select Menus are fully integrated in your custom commands! Define your components when replying to an interaction, add a custom listener in the command configuration and have every aspect of your command in the same file. Check [this guide](./tutorial/4ComponentInteractions.md) to get started with components!
