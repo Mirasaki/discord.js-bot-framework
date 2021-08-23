@@ -27,3 +27,24 @@ Insert any Discord member ID into the declared empty arrays to give someone thes
 
 ## Adding permission levels
 You can easlily add permission levels to the config, just follow the template provided by the already-present permission levels. Permission levels will be automatically sorted before boot/start-up but keeping it organized might be the better plan for furure changes/adjustments
+
+## Discord Permissions
+In every command file, you should declare the required Discord permissions to execute the command. Take a look at [the /help command](/src/commands/System/help.js).
+
+In the configuration export we have `clientPermissions` and `userPermissions`
+```javascript
+exports.config = {
+  ...
+  clientPermissions: ['EMBED_LINKS'],
+  userPermissions: [],
+  ...
+}
+```
+The line `clientPermissions: ['EMBED_LINKS'],` tells the client that it should check the permissions for the channel the command is called in, and verify that the client has `EMBED_LINKS`.
+
+The line `userPermissions: [],` tells the client that it should check if the command caller has all the declared permissions. Obviously, this will check `true`, but you could change it to `userPermissions: ['MANAGE_SERVER'],` to only execute the command if the command caller has the `MANAGE_SERVER` permission.
+
+
+### Notes
+  - `VIEW_CHANNEL` and `SEND_MESSAGES` are required by default, without these permissions, we (the client) wouldn't be able to respond to interactions.
+  - Add `EMBED_LINKS` to [your default required permissions](/config/config.json) to require `EMBED_LINKS` globally, every command will now require the permission before it can be executed.
