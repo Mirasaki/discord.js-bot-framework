@@ -171,11 +171,22 @@ module.exports.loadSlashCommands = async (client) => {
     if (consoleOutput.length > 2) console.log(consoleOutput.join('\n'));
   }
   log(`Loaded ${globalCommands.size} global slash commands!`, 'success');
-  // ${globalCommands.map(globalCmd => globalCmd.name).join(' - ')}
+  console.table(globalCommands.map((globalCmd) => {
+    return {
+      name: globalCmd.name,
+      description: globalCmd.description
+    };
+  }));
   if (testServer) {
     const testCommands = await testServer.commands.fetch();
     log(`Loaded ${testCommands.size} test commands!`, 'success');
-    // ${testCommands.map((testCmd) => testCmd.name).join(' - ')}
+    console.table(testCommands.map((testCmd) => {
+      return {
+        name: testCmd.name,
+        description: testCmd.description
+      };
+    }));
+
   }
 };
 
@@ -249,9 +260,7 @@ const validateCommand = (client, cmd, path) => {
     }
   };
 
-  // Stop Initializing if not all the required properties/exports are present
   stopIfInvalid();
-  // Additional check on those present properties afterwards
 
   if (permLevels[config.permLevel] === undefined) problems.push(`Unsupported permission level: ${config.permLevel}`);
 
