@@ -29,7 +29,7 @@ Insert any Discord member ID into the declared empty arrays to give someone thes
 You can easlily add permission levels to the config, just follow the template provided by the already-present permission levels. Permission levels will be automatically sorted before boot/start-up but keeping it organized might be the better plan for furure changes/adjustments
 
 ## Discord Permissions
-In every command file, you should declare the required Discord permissions to execute the command. Take a look at [the /help command](/src/commands/System/help.js).
+In every command file, you should declare the required Discord permissions to execute the command. Take a look at [the /help command](/src/commands/system/help.js).
 
 In the configuration export we have `clientPermissions` and `userPermissions`
 ```javascript

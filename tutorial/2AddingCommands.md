@@ -10,8 +10,6 @@
 - Restart/reboot the bot and your command will be ready!
   - Keep in mind, when using the minimal template, your command will be loaded/registered as a global Slash Command.
 
-[Continue to **3) Listening to Events**](./3ListeningToEvents.md)
-
 ## The command configuration explained
 ```javascript
 exports.run = ({...}) => {
@@ -59,3 +57,50 @@ exports.slash = {
   ]
 }
 ```
+## Adding the "/botinvite" command to this framework, a step-by-step guide
+1) Copy the contents of [the minimal command template](/src/commands/.minimalCommandTemplate.js)
+2) Create a new file **anywhere** in `src/commands` - I created the `botinvite.js` file in `src/commands/system`
+3) Paste your clipboard (`CTRL + V` on most keyboards) into the new file
+4) Provide a valid `description` and `permissionLevel` in your config exports
+5) Provide the code that will execute when the command is called:
+```javascript
+// Destructure MessageEmbed from discord.js and stripIndents from common-tags
+const { MessageEmbed } = require('discord.js');
+const { stripIndents } = require('common-tags');
+
+// This is our primary run function, this will execute when a command is called
+exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
+
+  // Assigning botInviteLink to the value declared in /config/config.json
+  const botInviteLink = client.json.config.links.botInvite
+    // Replacing the {{clientId}} tag by our actual client id
+    .replace(/{{clientId}}/, `${client.user.id}`);
+
+  // Replying to the received interaction
+  interaction.reply({
+    embeds: [
+      // Assigning a new MessageEmbed to interaction.embeds
+      new MessageEmbed()
+        // Set the color to our main bot color declared in /config/colors.json
+        .setColor(client.json.colors.main)
+        // Set the description to this string
+        .setDescription(
+          // stripIndents removes all indentation left-over from code editors
+          // If we didn't format the string with stripIndents,
+          // This message would look really weird (second line would be indented)
+          // on Discord Mobile
+          stripIndents`${emojis.response.success} ${interaction.member}, 
+            here you go: [Click to invite](${botInviteLink} "Invite Me!")
+          `
+          // You can see we create a hyperlink - The format for that is:
+          // [Text to display](https://link.com "Text to display on Mouseover")
+        )
+    ]
+  });
+};
+```
+
+## That's all!
+Reboot/restart your bot and call the command by typing "/"! If you add new commands in your production environment (which I advice against) you could add a "/register" command, this might be a good first command to add! The thought behind this command would be having `/src/commands` as a base directory and having someone input the rest of the path to the new file/command. Take a look at `/src/commands/system/reload.js` how to validate the new commands against this frameworks standards.
+
+[Continue to **3) Listening to Events**](./3ListeningToEvents.md)
