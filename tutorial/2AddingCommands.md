@@ -99,6 +99,7 @@ exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
   });
 };
 ```
+Now we send a MessageEmbed in this command, so you should add `EMBED_LINKS` to the commands clientPermissions in `exports.config`
 
 ## That's all!
 Reboot/restart your bot and call the command by typing "/"! If you add new commands in your production environment (which I advice against) you could add a "/register" command, this might be a good first command to add! The thought behind this command would be having `/src/commands` as a base directory and having someone input the rest of the path to the new file/command. Take a look at `/src/commands/system/reload.js` how to validate the new commands against this frameworks standards.
