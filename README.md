@@ -32,6 +32,7 @@ Complete | Notes
 Incomplete | Notes
 ---------- | -----
 ⌛ Automatically update Slash commands | Currently, you can reload a Slash command by configuration in the command export. I'd like to change that so it automatically checks if the new Slash Command data is different from the currently registered data.
+⌛ Add support for DM commands | At the time of writing this, Slash Commands can be called in a bots DM channel. I'd like to add full support for DM Slash Commands.
 
 ## Extras
 Complete | Notes
