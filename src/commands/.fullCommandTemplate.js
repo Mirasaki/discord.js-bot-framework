@@ -1,6 +1,6 @@
 exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
   //
-}
+};
 
 exports.config = {
   enabled: null,
@@ -13,7 +13,7 @@ exports.config = {
     duration: 5
   },
   nsfw: null
-}
+};
 
 exports.slash = {
   name: '',
@@ -33,4 +33,4 @@ exports.slash = {
       }
     }
   ]
-}
+};
