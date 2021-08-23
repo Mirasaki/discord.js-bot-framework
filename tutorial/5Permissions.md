@@ -14,7 +14,7 @@ By default, this framework comes with 8 different permission levels. You can vie
 
 **3 / Server Owner** > Checks `true` if `member.id` is the same as `guild.ownerId`
 
-## NOTE: The following permission levels can be configured [here](./config/config.json)
+## NOTE: The following permission levels can be configured [here](/config/config.json)
 Insert any Discord member ID into the declared empty arrays to give someone these permission levels
 
 **4 / Bot Support** > This permissions level **should** be used to allow members with this permission level to execute `Server Owner` permission level commands in any server.
