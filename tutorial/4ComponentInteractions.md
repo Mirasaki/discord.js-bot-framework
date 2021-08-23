@@ -1,7 +1,7 @@
 #### A guide explaining and showing you how to work with Discord components in this framework
 ---
 
-> ***Before you follow this example***, please be aware that all of this is built-in and ready to go if you copy the [Command Template](https://github.com/Destinovant/discord.js-bot-framework/tree/main/src/commands/.commandTemplate.js) when creating a new command
+> ***Before you follow this example***, please be aware that all of this is built-in and ready to go if you copy the [Full Command Template](https://github.com/Destinovant/discord.js-bot-framework/tree/main/src/commands/.fullCommandTemplate.js) when creating a new command
 
 In your command file (we're going to be using `src/commands/system/disable.js` as an example) **reply to the interaction** with your custom components, like so:
 ```javascript
@@ -58,3 +58,5 @@ exports.slash = {
     ]
 }
 ```
+
+[Continue to **5) Permissions**](./5Permissions.md)
