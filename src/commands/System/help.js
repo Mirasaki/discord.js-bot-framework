@@ -85,7 +85,7 @@ exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
     : 'No cooldown!'
 }
           **Slash Command:** ${
-  slash && slash.enabled && slash.global
+  config && config.enabled && slash.globalCommand
     ? emojis.response.success
     : emojis.response.error
 }
