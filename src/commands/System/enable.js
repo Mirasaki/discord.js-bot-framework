@@ -1,7 +1,8 @@
 const { MessageEmbed, MessageSelectMenu, MessageActionRow, MessageButton } = require('discord.js');
 const { permLevels } = require('../../handlers/permissions');
+const Command = require('../../classes/Command');
 
-exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
+module.exports = new Command(({ client, interaction, guildSettings, args, emojis }) => {
   const { member, guild } = interaction;
   const disabledCommands = guildSettings.disabledCmds;
 
@@ -11,12 +12,12 @@ exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
     &&
     cmd.config.required === false
     &&
-    disabledCommands.find(e => e === cmd.slash.name)
+    disabledCommands.find(e => e === cmd.config.data.name)
   ).forEach((cmd) => {
     options.push({
-      label: cmd.slash.name,
-      description: cmd.slash.description.length > 50 ? cmd.slash.description.slice(0, 46) + '...' : cmd.slash.description,
-      value: cmd.slash.name
+      label: cmd.config.data.name,
+      description: cmd.config.data.description.length > 50 ? cmd.config.data.description.slice(0, 46) + '...' : cmd.config.data.description,
+      value: cmd.config.data.name
     });
   });
 
@@ -49,38 +50,19 @@ exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
         )
     ]
   });
-};
-
-const getEmbed = (client, guild, settings) => {
-  return new MessageEmbed()
-    .setColor(client.json.colors.main)
-    .setAuthor(`All disabled commands for ${guild.name}`, guild.iconURL({ dynamic: true }))
-    .setDescription(`${
-      settings.disabledCmds[0]
-        ? `\`${settings.disabledCmds.join('`, `')}\``
-        : `${client.json.emojis.response.error} None!`
-    }`);
-};
-
-exports.config = {
-  enabled: true,
+}, {
   required: true,
   permLevel: 'Administrator',
   clientPermissions: ['EMBED_LINKS'],
-  userPermissions: [],
   throttling: {
-    usages: 2,
-    duration: 5
-  }
-};
-
-exports.slash = {
-  description: 'Enable previously disabled commands. This only applies to the server the command is called in.',
-  enabled: true,
+    usages: 1,
+    duration: 10
+  },
   globalCommand: true,
   testCommand: false,
-  serverIds: [],
-  options: [],
+  data: {
+    description: 'Enable previously disabled commands. This only applies to the server the command is called in.',
+  },
   listeners: [
     {
       customId: 'enable_01',
@@ -97,12 +79,12 @@ exports.slash = {
           &&
           cmd.config.required === false
           &&
-          disabledCmds.find(e => e === cmd.slash.name)
+          disabledCmds.find(e => e === cmd.config.data.name)
         ).forEach((cmd) => {
           options.push({
-            label: cmd.slash.name,
-            description: cmd.slash.description.length > 50 ? cmd.slash.description.slice(0, 46) + '...' : cmd.slash.description,
-            value: cmd.slash.name
+            label: cmd.config.data.name,
+            description: cmd.config.data.description.length > 50 ? cmd.config.data.description.slice(0, 46) + '...' : cmd.config.data.description,
+            value: cmd.config.data.name
           });
         });
 
@@ -150,4 +132,15 @@ exports.slash = {
       }
     }
   ]
+});
+
+const getEmbed = (client, guild, settings) => {
+  return new MessageEmbed()
+    .setColor(client.json.colors.main)
+    .setAuthor(`All disabled commands for ${guild.name}`, guild.iconURL({ dynamic: true }))
+    .setDescription(`${
+      settings.disabledCmds[0]
+        ? `\`${settings.disabledCmds.join('`, `')}\``
+        : `${client.json.emojis.response.error} None!`
+    }`);
 };

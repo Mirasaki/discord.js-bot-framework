@@ -3,8 +3,8 @@ require('dotenv').config({
 });
 
 const { Client, Intents } = require('discord.js');
-const { validateCommands } = require('./handlers/commands.js');
-const { initializeListeners } = require('./handlers/listeners.js');
+const { registerCommands } = require('./handlers/commands');
+const { initializeListeners } = require('./handlers/listeners');
 const { log } = require('./handlers/logger.js');
 const { getFiles } = require('./utils/tools.js');
 const nodePath = require('path');
@@ -18,7 +18,7 @@ const nodePath = require('path');
     ],
     fetchAllMembers: true
   });
-  validateCommands(client);
+  registerCommands(client);
   initializeListeners(client);
   await require('./mongo/connection')();
   client.json = {};

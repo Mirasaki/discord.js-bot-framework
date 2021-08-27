@@ -1,6 +1,17 @@
 const { validEvents } = require('../../handlers/listeners');
+const Command = require('../../classes/Command');
 
-exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
+const eventsData = [];
+validEvents.filter((event) => (
+  !event.match(/messageReaction|interaction|application|channelPins/)
+)).forEach((event) => {
+  eventsData.push({
+    name: event.toLowerCase(),
+    value: event
+  });
+});
+
+module.exports = new Command(({ client, interaction, guildSettings, args, emojis }) => {
   if (!args[0]) {
     return interaction.reply({
       content: `${emojis.response.error} Include one of the available events!`,
@@ -23,56 +34,41 @@ exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
     }
   };
 
-  console.log(args[1]);
   client.emit(event, getObj(args[0]), getObj(args[1]), getObj(args[2]));
   interaction.reply({
     content: `${emojis.response.success} Successfully emitted ${event}`,
     ephemeral: true
   });
-};
-
-exports.config = {
+}, {
   enabled: true,
   required: false,
   permLevel: 'Bot Administrator',
   clientPermissions: [],
-  userPermissions: []
-};
-
-const eventsData = [];
-validEvents.filter((event) => (
-  !event.match(/messageReaction|interaction|application|channelPins/)
-)).forEach((event) => {
-  eventsData.push({
-    name: event.toLowerCase(),
-    value: event
-  });
-});
-
-exports.slash = {
-  description: 'Emit a discord.js event to the client',
-  enabled: true,
+  userPermissions: [],
   globalCommand: false,
   testCommand: true,
   serverIds: [],
-  options: [
-    {
-      name: 'a-i',
-      description: 'Events (A-I) to emit to the client',
-      type: 3,
-      choices: eventsData.slice(0, 24)
-    },
-    {
-      name: 'j-t',
-      description: 'Events (J-T) to emit to the client',
-      type: 3,
-      choices: eventsData.slice(25, 49)
-    },
-    {
-      name: 't-z-custom',
-      description: 'Events (T-Z & Custom) to emit to the client',
-      type: 3,
-      choices: eventsData.slice(50, eventsData.length)
-    }
-  ]
-};
+  data: {
+    description: 'Emit a discord.js event to the client',
+    options: [
+      {
+        name: 'a-i',
+        description: 'Events (A-I) to emit to the client',
+        type: 3,
+        choices: eventsData.slice(0, 24)
+      },
+      {
+        name: 'j-t',
+        description: 'Events (J-T) to emit to the client',
+        type: 3,
+        choices: eventsData.slice(25, 49)
+      },
+      {
+        name: 't-z-custom',
+        description: 'Events (T-Z & Custom) to emit to the client',
+        type: 3,
+        choices: eventsData.slice(50, eventsData.length)
+      }
+    ]
+  }
+});

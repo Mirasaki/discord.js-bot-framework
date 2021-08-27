@@ -4,8 +4,7 @@ const { log } = require('./logger');
 
 module.exports.initializeListeners = (client) => {
   const loadedListeners = [];
-  const table = [];
-  for (let path of getFiles(process.env.EVENTS_PATH || 'src/listeners', '.js')) {
+  for (let path of getFiles(nodePath.join('src', 'listeners'), '.js')) {
     path = path.replaceAll(nodePath.sep, '/');
     const event = require(path);
     const eventName = path.slice(path.lastIndexOf('/') + 1, path.length - 3);
@@ -15,17 +14,9 @@ module.exports.initializeListeners = (client) => {
     if (check) throw new Error(`Duplicate Event: ${eventName} already loaded/bound!\nOriginal event: ${check.origin}\nRequested event: ${path}`);
     loadedListeners.push(thisObj);
     client.on(eventName, (...received) => event(client, ...received));
-    table.push({
-      name: eventName,
-      path: thisObj.origin.slice(
-        thisObj.origin
-          .indexOf(process.env.EVENTS_PATH
-          ), thisObj.origin.length
-      )
-    });
   }
-  log('Finished initializing listeners!', 'success');
-  console.table(table);
+  console.log();
+  log(`Successfully initialized listeners: [${loadedListeners.map(listener => listener.name).join(', ')}]`, 'success');
   console.log();
 };
 

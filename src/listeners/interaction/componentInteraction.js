@@ -25,7 +25,7 @@ module.exports = (client, interaction, guildSettings) => {
       components: []
     });
   }
-  const listener = command.slash.listeners.find(e => e.customId === customId);
-  if (!listener) throw new Error(`ComponentInteractionError:\nInvalid component listener/customId!\nRequested listeners: ${customId}\nOriginated from: ${command.slash.name}`);
+  const listener = command.config.listeners.find(e => e.customId === customId);
+  if (!listener) throw new Error(`ComponentInteractionError:\nInvalid component listener/customId!\nRequested listeners: ${customId}\nOriginated from: ${command.config.data.name}`);
   listener.onClick(client, interaction, guildSettings);
 };

@@ -68,7 +68,7 @@ module.exports = async (client, interaction, guildSettings) => {
     }
   }
 
-  log(`${member.user.tag} (${member.perms.permissionName}) ran command ${cmd.slash.name}`, 'slash');
+  log(`${member.user.tag} (${member.perms.permissionName}) ran command ${cmd.config.data.name}`, 'slash');
   cmd.run({
     client,
     interaction,

@@ -67,7 +67,7 @@ module.exports.getTimeSince = (date) => {
       formatResult(Math.floor((((diff % TIME_IN_A_YEAR) % TIME_IN_A_MONTH) % TIME_IN_A_WEEK) / TIME_IN_A_DAY), 'Day')
     }${
       formatResult(Math.floor(((((diff % TIME_IN_A_YEAR) % TIME_IN_A_MONTH) % TIME_IN_A_WEEK) % TIME_IN_A_DAY) / TIME_IN_AN_HOUR), 'Hour')
-    }`;
+    }`.trim();
   } else if (diff > TIME_IN_A_MONTH) {
     return `${
       formatResult(Math.floor(diff / TIME_IN_A_MONTH), 'Month')
@@ -77,7 +77,7 @@ module.exports.getTimeSince = (date) => {
       formatResult(Math.floor(((diff % TIME_IN_A_MONTH) % TIME_IN_A_WEEK) / TIME_IN_A_DAY), 'Day')
     }${
       formatResult(Math.floor((((diff % TIME_IN_A_MONTH) % TIME_IN_A_WEEK) & TIME_IN_A_DAY) / TIME_IN_AN_HOUR), 'Hour')
-    }`;
+    }`.trim();
   } else if (diff > TIME_IN_A_WEEK) {
     return `${
       formatResult(Math.floor(diff / TIME_IN_A_WEEK), 'Week')
@@ -85,7 +85,7 @@ module.exports.getTimeSince = (date) => {
       formatResult(Math.floor((diff % TIME_IN_A_WEEK) / TIME_IN_A_DAY), 'Day')
     }${
       formatResult(Math.floor(((diff % TIME_IN_A_MONTH) & TIME_IN_A_WEEK) / TIME_IN_AN_HOUR), 'Hour')
-    }`;
+    }`.trim();
   } else if (diff > TIME_IN_A_DAY) {
     return `${
       formatResult(Math.floor(diff / TIME_IN_A_DAY), 'Day')
@@ -93,24 +93,24 @@ module.exports.getTimeSince = (date) => {
       formatResult(Math.floor((diff % TIME_IN_A_DAY) / TIME_IN_AN_HOUR), 'Hour')
     }${
       formatResult(Math.floor(((diff % TIME_IN_A_DAY) % TIME_IN_AN_HOUR) / TIME_IN_A_MINUTE), 'Minute')
-    }`;
+    }`.trim();
   } else if (diff > TIME_IN_AN_HOUR) {
     return `${
       formatResult(Math.floor(diff / TIME_IN_AN_HOUR), 'Hour')
     }${
       formatResult(Math.floor((diff % TIME_IN_AN_HOUR) / TIME_IN_A_MINUTE), 'Minute')
-    }`;
+    }`.trim();
   } else if (diff > TIME_IN_A_MINUTE) {
     return `${
       formatResult(Math.floor(diff / TIME_IN_A_MINUTE), 'Minute')
     }${
       formatResult(Math.floor((diff % TIME_IN_A_MINUTE) / 1000), 'Second')
-    }`;
+    }`.trim();
   } else {
     return `${
       Math.floor(diff / 1000) === 1
         ? '1 Second'
         : `${Math.floor(diff / 1000)} Seconds`
-    }`;
+    }`.trim();
   }
 };

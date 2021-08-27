@@ -1,11 +1,10 @@
-exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
-  //
-};
+const Command = require("../classes/Command");
 
-exports.config = {
-  permLevel: ''
-};
+module.exports = new Command(({ client, interaction, guildSettings, args, emojis }) => {
 
-exports.slash = {
-  description: '',
-};
+}, {
+  permLevel: '',
+  data: {
+    description: ''
+  }
+});

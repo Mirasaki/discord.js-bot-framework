@@ -1,7 +1,8 @@
 const { exec } = require('child_process');
 const { MessageEmbed } = require('discord.js');
+const Command = require('../../classes/Command');
 
-exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
+module.exports = new Command(({ client, interaction, guildSettings, args, emojis }) => {
   const startTime = process.hrtime();
   exec(args[0].value, (err, consoleOutput) => {
 
@@ -27,22 +28,19 @@ exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
     }
 
   });
-};
-
-exports.config = {
-  permLevel: 'Developer'
-};
-
-exports.slash = {
-  description: 'Execute console commands',
+}, {
+  permLevel: 'Developer',
   testCommand: true,
   globalCommand: false,
-  options: [
-    {
-      type: 'STRING',
-      name: 'command',
-      description: 'The console command to execute',
-      required: true
-    }
-  ]
-};
+  data: {
+    description: 'Execute console commands',
+    options: [
+      {
+        type: 'STRING',
+        name: 'command',
+        description: 'The console command to execute',
+        required: true
+      }
+    ]
+  }
+});
