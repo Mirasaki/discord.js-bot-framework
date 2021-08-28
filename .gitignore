@@ -2,4 +2,3 @@
 node_modules
 *.log
 src/commands/developer/commands.js
-config/config.json
