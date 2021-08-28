@@ -1,36 +1,35 @@
-exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
-  //
-};
+const Command = require("../classes/Command");
 
-exports.config = {
-  enabled: true,
-  required: true,
-  permLevel: '',
+module.exports = new Command(() => {
+
+}, {
+  // Permissions
+  permLevel: null,
   clientPermissions: [],
   userPermissions: [],
-  throttling: {
-    usages: 1,
-    duration: 5
-  },
-  nsfw: false
-};
 
-exports.slash = {
-  name: '',
-  category: '',
-  description: '',
-  defaultPermission: true,
+  // Status
   enabled: true,
+  required: true,
+  nsfw: false,
+
+  // Command Cooldown
+  cooldown: {
+    usages: 1,
+    duration: 2
+  },
+
+  // Command State
   globalCommand: false,
   testCommand: true,
   serverIds: [],
-  options: [],
-  listeners: [
-    {
-      customId: 'custom_id',
-      onClick: async function (client, interaction, guildSettings) {
 
-      }
-    }
-  ]
-};
+  // Slash Command data
+  data: {
+    name: null,
+    description: null,
+    options: [],
+    defaultPermission: true,
+  },
+
+});

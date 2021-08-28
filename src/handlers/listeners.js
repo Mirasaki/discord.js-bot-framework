@@ -87,14 +87,5 @@ module.exports.validEvents = [
   'userUpdate',
   'voiceStateUpdate',
   'warn',
-  'webhookUpdate',
-
-  /*
-    CUSTOM (non-discord.js)
-    LISTENERS
-  */
-
-  'commandInteraction',
-  'componentInteraction',
-  'selectMenuInteraction'
+  'webhookUpdate'
 ];

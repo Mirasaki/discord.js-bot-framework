@@ -1,5 +1,6 @@
 const { readdirSync, statSync } = require('fs');
 const nodePath = require('path');
+const { Permissions } = require('discord.js');
 
 // getFiles() ignores files that start with "."
 module.exports.getFiles = (path, extension) => {
@@ -18,6 +19,23 @@ module.exports.getFiles = (path, extension) => {
     ) res.push(itemInDir);
   }
   return res;
+};
+
+module.exports.getBotInvite = (client) => {
+  return client.generateInvite({
+    permissions: getPermFlags(require('../../config/config.json').permissions.defaultRequiredPermissions),
+    scopes: ['bot', 'applications.commands'],
+    disableGuildSelect: false
+  });
+};
+
+const getPermFlags = (perms) => {
+  if (typeof perms === 'string') perms = [perms];
+  const final = [];
+  for (const perm of perms) {
+    if (Permissions.FLAGS[perm]) return Permissions.FLAGS[perm];
+  }
+  return final;
 };
 
 module.exports.titleCase = (str) => {

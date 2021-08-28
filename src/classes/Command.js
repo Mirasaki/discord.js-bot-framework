@@ -31,7 +31,7 @@ module.exports = class Command {
       // Status
       enabled: true,
       required: true,
-      nsfw: true,
+      nsfw: false,
 
       // Command Cooldown
       cooldown: {
@@ -48,13 +48,11 @@ module.exports = class Command {
       data: {
         name: null,
         description: null,
+        category: null,
         options: [],
         defaultPermission: true,
       },
-
-      // Slash Command Component Listeners
-      listeners: [],
-
+    
       ...props
     };
   }
@@ -94,10 +92,12 @@ module.exports = class Command {
     
     // If no category is provided, it will default to the parent name folder
     const splitPath = path.split(nodePath.sep);
-    nodePath.basename(nodePath.dirname(path)) === topLevelCommandFolder.split('/').pop()
-      ? config.category = 'Uncategorized'
-      : config.category = titleCase(splitPath[splitPath.length - 2]);
-    
+    if (!config.data.category) {
+      nodePath.basename(nodePath.dirname(path)) === topLevelCommandFolder.split('/').pop()
+        ? config.data.category = 'Uncategorized'
+        : config.data.category = titleCase(splitPath[splitPath.length - 2]);
+    }
+
     // Permissions
     if (permLevels[config.permLevel] === undefined) throw new CommandError({
       path: formattedPath,

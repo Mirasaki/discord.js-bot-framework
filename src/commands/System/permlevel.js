@@ -14,6 +14,7 @@ module.exports = new Command(({ client, interaction, guildSettings, args, emojis
 }, {
   permLevel: 'User',
   clientPermissions: ['EMBED_LINKS'],
+  required: false,
   globalCommand: true,
   testCommand: false,
   data: {

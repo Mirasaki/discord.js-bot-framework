@@ -14,7 +14,7 @@ module.exports.registerCommands = (client) => {
       require(path).load(client, path);
     } catch (err) {
       throw new CommandError({
-        path: path,
+        path,
         message: `Encountered error while loading command:\n${err}`
       });
     }
@@ -24,7 +24,7 @@ module.exports.registerCommands = (client) => {
     let currentCategory = '';
     const sorted = [];
     client.commands.forEach(command => {
-      const workingCategory = titleCase(command.config.category);
+      const workingCategory = titleCase(command.config.data.category);
       if (currentCategory !== workingCategory) {
         sorted.push({
           category: workingCategory,
@@ -40,7 +40,7 @@ module.exports.registerCommands = (client) => {
   client.commands.sortByCategory()
     .forEach(categoryObj => {
       const count = categoryObj.commands.length;
-      log(`Successfully loaded ${count} ${categoryObj.commands[0].config.category} command${
+      log(`Successfully loaded ${count} ${categoryObj.commands[0].config.data.category} command${
         count === 1 ? '' : 's'
       }: [${categoryObj.commands.map(cmd => cmd.config.data.name).join(', ')}]`, 'success');
     });
@@ -92,6 +92,9 @@ module.exports.loadSlashCommands = async (client) => {
       console.log(consoleOutput.join('\n'));
       continue;
     }
+
+    if (config.globalCommand === true) config.testCommand = false;
+    else if (config.testCommand === true) config.globalCommand = false;
 
     if (
       (
@@ -145,7 +148,7 @@ module.exports.loadSlashCommands = async (client) => {
     return {
       id: globalCmd.id,
       name: globalCmd.name,
-      category: cmd.config.category,
+      category: cmd.config.data.category,
       edited: cmd.config._fileStats.lastEdit
     };
   }));
@@ -155,10 +158,38 @@ module.exports.loadSlashCommands = async (client) => {
     console.log();
     log(`Loaded ${testCommands.size} test commands!`, 'success');
     console.table(testCommands.map((testCmd) => {
+      const cmd = client.commands.get(testCmd.name);
       return {
+        id: testCmd.id,
         name: testCmd.name,
-        description: testCmd.description
+        category: cmd.config.data.category,
+        edited: cmd.config._fileStats.lastEdit
       };
     }));
   }
+};
+
+module.exports.checkExpired = async (client) => {
+  const globalCommands = await client.application.commands.fetch();
+  for (let cmd of globalCommands) {
+    cmd = cmd[1];
+    if (!client.commands.get(cmd.name)) {
+      log(`Deleting GLOBAL application command <${cmd.name}> because the file was deleted.`, 'error');
+      await client.application.commands.delete(cmd.id);
+    }
+  }
+
+  const testServer = client.guilds.cache.get(client.json.config.ids.testServer);
+  if (testServer) {
+    const testCommands = await testServer.commands.fetch();
+    for (let cmd of testCommands) {
+      cmd = cmd[1];
+      if (!client.commands.get(cmd.name)) {
+        log(`Deleting TEST application command <${cmd.name}> because the file was deleted.`, 'error');
+        await testServer.commands.delete(cmd.id);
+      }
+    }
+  }
+
+  // Check old server-specific commands
 };

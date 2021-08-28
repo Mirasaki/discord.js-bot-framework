@@ -30,10 +30,9 @@ module.exports = new Command(({ client, interaction, guildSettings, args, emojis
   });
 }, {
   permLevel: 'Developer',
-  testCommand: true,
-  globalCommand: false,
   data: {
     description: 'Execute console commands',
+    clientPermissions: ['ATTACH_FILES', 'EMBED_LINKS'],
     options: [
       {
         type: 'STRING',

@@ -11,9 +11,6 @@ module.exports = new Command(({ client, interaction, guildSettings, args, emojis
         .addComponents(
           new MessageButton({
             label: 'Testing',
-            // The defined listener in Command config.listeners
-            // listens to "test_01" not "no_listener_for_this_id"
-            // This will throw an error if clicked
             customId: 'no_listener_for_this_id',
             style: 'PRIMARY',
             emoji: '💀'
@@ -22,19 +19,17 @@ module.exports = new Command(({ client, interaction, guildSettings, args, emojis
     ]
   });
 }, {
-  permLevel: 'User',
+  permLevel: 'Developer',
   clientPermissions: ['MANAGE_CHANNELS', 'EMBED_LINKS', 'USE_EXTERNAL_EMOJIS'],
   userPermissions: ['ADMINISTRATOR', 'EMBED_LINKS', 'USE_EXTERNAL_EMOJIS'],
   nsfw: true,
-  globalCommand: false,
-  testCommand: true,
   serverIds: [
     '826763767437459516', // BPS
     '819994671929360414', // A Server the client isn't in
     '793894728847720468' // Support Server
   ],
   data: {
-    description: 'Test functionality with this command.',
+    description: 'Test functsionality with this command.',
     options: [
       {
         name: 'test',
@@ -42,13 +37,5 @@ module.exports = new Command(({ client, interaction, guildSettings, args, emojis
         type: 'STRING'
       }
     ],
-  },
-  listeners: [
-    {
-      customId: 'test_01',
-      onClick: async function (client, interaction, guildSettings) {
-        // Code to execute on button click
-      }
-    }
-  ]
+  }
 });

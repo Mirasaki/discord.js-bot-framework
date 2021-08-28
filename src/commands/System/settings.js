@@ -89,6 +89,11 @@ module.exports = new Command(async ({ client, interaction, guildSettings, args, 
   switch (requested) {
     case 'modrole': {
       if (guildSettings.permissions.modRole === newValue) return replySameValue(interaction, 'modRole');
+      if (newValue === guild.id) {
+        return interaction.reply({
+          content: `${emojis.response.error} Mod Role can't be set to \`@everyone\`!`
+        });
+      }
       guildSettings.permissions.modRole = newValue;
       await guildSettings.save();
       returnUpdated(interaction, 'modRole', guild.roles.cache.get(newValue).name);
@@ -98,6 +103,11 @@ module.exports = new Command(async ({ client, interaction, guildSettings, args, 
 
     case 'adminrole': {
       if (guildSettings.permissions.adminRole === newValue) return replySameValue(interaction, 'adminRole');
+      if (newValue === guild.id) {
+        return interaction.reply({
+          content: `${emojis.response.error} Admin Role can't be set to \`@everyone\`!`
+        });
+      }
       guildSettings.permissions.adminRole = newValue;
       await guildSettings.save();
       returnUpdated(interaction, 'adminRole', guild.roles.cache.get(newValue).name);
@@ -146,7 +156,6 @@ module.exports = new Command(async ({ client, interaction, guildSettings, args, 
     default: break;
   }
 }, {
-  required: true,
   permLevel: 'Administrator',
   throttling: {
     usages: 2,

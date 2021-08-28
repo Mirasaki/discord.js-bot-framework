@@ -45,8 +45,7 @@ module.exports = new Command(async ({ client, interaction, guildSettings, args, 
   }
 }, {
   permLevel: 'Developer',
-  globalCommand: false,
-  testCommand: true,
+  clientPermissions: ['ATTACH_FILES', 'EMBED_LINKS'],
   data: {
     description: 'Evaluate Javascript code',
     options: [

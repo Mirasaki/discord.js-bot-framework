@@ -6,8 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "test": "node src/test.js",
-    "dev": "nodemon run node .",
-    "resetThrottling": "node scripts/purgeCmdThrottleCollection.js"
+    "dev": "nodemon run node --trace-warnings ."
   },
   "repository": {
     "type": "git",

@@ -1,5 +1,6 @@
-const { MessageEmbed } = require('discord.js');
-const { titleCase } = require('../../utils/tools');
+/* eslint-disable indent */
+const { MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
+const { titleCase, getBotInvite } = require('../../utils/tools');
 const { permLevels } = require('../../handlers/permissions');
 const { stripIndents } = require('common-tags');
 const Command = require('../../classes/Command');
@@ -11,9 +12,9 @@ module.exports = new Command(({ client, interaction, guildSettings, args, emojis
   if (!args[0]) {
     const authorCommands = client.commands.filter(cmd => permLevels[cmd.config.permLevel] <= permissionLevel);
     const commands = authorCommands
-      .sort((a, b) => a.config.category > b.config.category
+      .sort((a, b) => a.config.data.category > b.config.data.category
         ? 1
-        : ((a.config.data.name > b.config.data.name && a.config.category === b.config.category)
+        : ((a.config.data.name > b.config.data.name && a.config.data.category === b.config.data.category)
           ? 1
           : -1));
 
@@ -21,7 +22,7 @@ module.exports = new Command(({ client, interaction, guildSettings, args, emojis
     let currentCategory = '';
 
     commands.forEach(command => {
-      const workingCategory = titleCase(command.config.category);
+      const workingCategory = titleCase(command.config.data.category);
       if (currentCategory !== workingCategory) {
         embedText += `\n\n***__${workingCategory}__***\n`;
         currentCategory = workingCategory;
@@ -36,6 +37,22 @@ module.exports = new Command(({ client, interaction, guildSettings, args, emojis
           .setColor(client.json.colors.main)
           .setDescription(embedText)
           .addField('Detailed Command Information', '**/**help <any command name>')
+      ],
+      components: [
+        new MessageActionRow()
+          .addComponents(new MessageButton({
+            style: 'LINK',
+            label: 'Invite me',
+            emoji: '☑️',
+            url: getBotInvite(client)
+          }),
+          new MessageButton({
+            style: 'LINK',
+            label: 'Get Support',
+            emoji: '🙋',
+            url: client.json.config.links.supportServer
+          })
+        )  
       ]
     });
   }
@@ -68,31 +85,14 @@ module.exports = new Command(({ client, interaction, guildSettings, args, emojis
       new MessageEmbed({ fields })
         .setColor(client.json.colors.main)
         .setAuthor(titleCase(data.name))
-        .setDescription(stripIndents`${data.description}${
-          config.nsfw === true ? `\n\n**SFW:** ${emojis.response.error}\n` : '\n\n'
-        }**Category:** ${config.category}
-        **Max Uses:** ${
-  throttling
-    ? `${
-      throttling.usages === 1
-        ? '1 time'
-        : `${throttling.usages} times`
-    } in ${
-      throttling.duration === 1
-        ? '1 second'
-        : `${throttling.duration} seconds`
-    }`
-    : 'No cooldown!'
-}
-${
-  config.testCommand
-    ? `**Test Command:** ${emojis.response.success}`
-    : ''
-}**Can Be Disabled:** ${
-  config.required
-    ? emojis.response.success
-    : emojis.response.error
-}
+        .setDescription(stripIndents`${data.description}${config.nsfw === true ? `\n\n**SFW:** ${emojis.response.error}\n` : '\n\n'
+        }**Category:** ${config.data.category}
+        **Max Uses:** ${throttling
+          ? `${throttling.usages === 1 ? '1 time' : `${throttling.usages} times`} in ${throttling.duration === 1 ? '1 second' : `${throttling.duration} seconds`}`
+          : 'No cooldown!'
+        }
+        ${config.testCommand ? `**Test Command:** ${emojis.response.success}` : ''
+        }**Can Be Disabled:** ${config.required ? emojis.response.success : emojis.response.error}
         `)
         .addField('My Permissions', `${
           config.clientPermissions[0]
@@ -105,10 +105,10 @@ ${
             : `${emojis.response.success} None required!`
         }`, true)
         .setFooter('')
-    ]
+    ],
   });
+
 }, {
-  required: true,
   permLevel: 'User',
   clientPermissions: ['EMBED_LINKS'],
   throttling: {
