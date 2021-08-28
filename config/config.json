@@ -1,17 +1,16 @@
 {
   "links": {
-    "botInvite": "https://discord.com/api/oauth2/authorize?client_id={{clientId}}&permissions=8&scope=bot%20applications.commands",
-    "supportServer": "https://discord.gg/KfHFhGNPvz"
+    "supportServer": "https://discord.gg/"
   },
   "ids": {
-    "testServer": "793894728847720468",
-    "serverJoinLeaveChannel": "870182690064850984"
+    "testServer": "",
+    "serverJoinLeaveChannel": ""
   },
   "permissions": {
     "support": [],
     "admins": [],
     "developers": [],
-    "owner": "290182686365188096",
-    "defaultRequiredPermissions": []
+    "owner": "",
+    "defaultRequiredPermissions": ["VIEW_CHANNEL", "SEND_MESSAGES"]
   }
 }
