@@ -1,4 +1,4 @@
-const { getFiles, titleCase } = require('../utils/tools');
+const { getFiles, titleCase, getBotInvite } = require('../utils/tools');
 const { Collection } = require('discord.js');
 const { log } = require('./logger');
 const { isEqual } = require('lodash');
@@ -51,6 +51,7 @@ module.exports.loadSlashCommands = async (client) => {
   const { commands } = application;
   let globalCommands = await commands.fetch();
   const testServer = client.guilds.cache.get(client.json.config.ids.testServer);
+  if (!testServer) throw new Error(`Please provide a testServer id in config/config.json and make sure you added the bot to that server.\nHeres an invite link: ${getBotInvite(client)}`);
 
   for (const cmd of client.commands) {
     const consoleOutput = [];
@@ -63,14 +64,11 @@ module.exports.loadSlashCommands = async (client) => {
       || !isEqual(commandData.options, apiData.options)
     );
 
-    let testCommand;
-    if (testServer) {
-      const allTestServerCommands = await testServer.commands.fetch();
-      testCommand = allTestServerCommands.find((e) => (
-        e.client.user.id === client.user.id
-        && e.name === data.name
-      ));
-    }
+    const allTestServerCommands = await testServer.commands.fetch();
+    const testCommand = allTestServerCommands.find((e) => (
+      e.client.user.id === client.user.id
+      && e.name === data.name
+    ));
 
     const globalCommand = globalCommands.find((e) => e.name === data.name && e.guildId === null);
   
@@ -96,31 +94,93 @@ module.exports.loadSlashCommands = async (client) => {
     if (config.globalCommand === true) config.testCommand = false;
     else if (config.testCommand === true) config.globalCommand = false;
 
-    if (
-      (
-        config.permLevel === 'Moderator'
-        || config.permLevel === 'Administrator'
-        || config.permLevel === 'Server Owner'
-      )
-      && config.globalCommand
-    ) data.defaultPermission = false;
-    else data.defaultPermission = true;
+    // Removed cuz our approach here would only work
+    // if the client was online when added to a server
+
+    // if (
+    //   (
+    //     config.permLevel === 'Moderator'
+    //     || config.permLevel === 'Administrator'
+    //     || config.permLevel === 'Server Owner'
+    //   )
+    //   && config.globalCommand
+    // ) data.defaultPermission = false;
+    // else data.defaultPermission = true;
+
+    if (data.defaultPermission === undefined) data.defaultPermission = true;
 
     consoleOutput.push(`Reloading Slash Command: ${data.name}`);
-
     if (config.globalCommand === true) {
       if (globalCommand && dataChanged(data, globalCommand)) commands.edit(globalCommand, data) && consoleOutput.push('    G Editing global command with new data (Can take up to 1 hour to take effect)');
       else if (!globalCommand) commands.create(data) && consoleOutput.push('    G Creating global command (Can take up to 1 hour to take effect)');
     }
     else if (globalCommand) commands.delete(globalCommand) && consoleOutput.push('    G Deleting global command (Can take up to 1 hour to take effect)');
 
-    if (testServer) {
-      if (config.testCommand === true) {
-        if (testCommand && dataChanged(data, testCommand)) testServer.commands.edit(testCommand, data) && consoleOutput.push('    T Edited test command with new data');
-        else if (!testCommand) testServer.commands.create(data) && consoleOutput.push('    T Created Test Command');
+    // Test server - Test commands setup
+    if (config.testCommand === true) {
+      if (testCommand && dataChanged(data, testCommand)) testServer.commands.edit(testCommand, data) && consoleOutput.push('    T Edited test command with new data');
+      else if (!testCommand) {
+        const cmd = await testServer.commands.create(data);
+        consoleOutput.push('    T Created Test Command');
+
+        const applyUserPerms = (ids) => {
+          if (Array.isArray(ids)) {
+            for (const id of ids) {
+              testServer.commands.permissions.add({
+                command: cmd.id,
+                permissions: [
+                  {
+                    id,
+                    type: 'USER',
+                    permission: true
+                  }
+                ]
+              });
+            }
+          } else if (typeof ids === 'string') {
+            testServer.commands.permissions.set({
+              command: cmd.id,
+              permissions: [
+                {
+                  id: testServer.id,
+                  type: 'ROLE',
+                  permission: false
+                },
+                {
+                  id: ids,
+                  type: 'USER',
+                  permission: true
+                }
+              ]
+            });
+          } else throw new TypeError('Expected either a String or Array');
+        };
+        const permissions = client.json.config.permissions;
+        switch (config.permLevel) {
+          case 'Bot Owner': applyUserPerms(client.json.config.permissions.owner);break;
+          case 'Developer': {
+            applyUserPerms(permissions.owner);
+            applyUserPerms(permissions.developers);
+            break;
+          }
+          case 'Bot Administrator': {
+            applyUserPerms(permissions.owner);
+            applyUserPerms(permissions.developers);
+            applyUserPerms(permissions.admins);
+            break;
+          }
+          case 'Bot Support': {
+            applyUserPerms(permissions.owner);
+            applyUserPerms(permissions.developers);
+            applyUserPerms(permissions.admins);
+            applyUserPerms(permissions.support);
+            break;
+          }
+          default: break;
+        }
       }
-      else if (testCommand) testServer.commands.delete(testCommand) && consoleOutput.push('    T Deleted test command');
     }
+    else if (testCommand) testServer.commands.delete(testCommand) && consoleOutput.push('    T Deleted test command');
 
     if (Array.isArray(config.serverIds)) {
       for (const entry of client.guilds.cache.filter((guild) => !config.serverIds.includes(guild.id) && guild.id !== client.json.config.ids.testServer)) {
@@ -153,20 +213,18 @@ module.exports.loadSlashCommands = async (client) => {
     };
   }));
 
-  if (testServer) {
-    const testCommands = await testServer.commands.fetch();
-    console.log();
-    log(`Loaded ${testCommands.size} test commands!`, 'success');
-    console.table(testCommands.map((testCmd) => {
-      const cmd = client.commands.get(testCmd.name);
-      return {
-        id: testCmd.id,
-        name: testCmd.name,
-        category: cmd.config.data.category,
-        edited: cmd.config._fileStats.lastEdit
-      };
-    }));
-  }
+  const testCommands = await testServer.commands.fetch();
+  console.log();
+  log(`Loaded ${testCommands.size} test commands!`, 'success');
+  console.table(testCommands.map((testCmd) => {
+    const cmd = client.commands.get(testCmd.name);
+    return {
+      id: testCmd.id,
+      name: testCmd.name,
+      category: cmd.config.data.category,
+      edited: cmd.config._fileStats.lastEdit
+    };
+  }));
 };
 
 module.exports.checkExpired = async (client) => {
@@ -180,14 +238,12 @@ module.exports.checkExpired = async (client) => {
   }
 
   const testServer = client.guilds.cache.get(client.json.config.ids.testServer);
-  if (testServer) {
-    const testCommands = await testServer.commands.fetch();
-    for (let cmd of testCommands) {
-      cmd = cmd[1];
-      if (!client.commands.get(cmd.name)) {
-        log(`Deleting TEST application command <${cmd.name}> because the file was deleted.`, 'error');
-        await testServer.commands.delete(cmd.id);
-      }
+  const testCommands = await testServer.commands.fetch();
+  for (let cmd of testCommands) {
+    cmd = cmd[1];
+    if (!client.commands.get(cmd.name)) {
+      log(`Deleting TEST application command <${cmd.name}> because the file was deleted.`, 'error');
+      await testServer.commands.delete(cmd.id);
     }
   }
 
