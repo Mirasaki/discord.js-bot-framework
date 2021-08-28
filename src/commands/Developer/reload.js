@@ -1,6 +1,6 @@
-const { reloadCommand } = require('../../handlers/commands');
+const Command = require('../../classes/Command');
 
-exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
+module.exports = new Command(({ client, interaction, guildSettings, args, emojis }) => {
   const commandName = args[0].value;
   const command = client.commands.get(commandName);
 
@@ -12,51 +12,28 @@ exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
   }
 
   try {
-    reloadCommand(client, command);
+    command.reload(client);
     interaction.reply({
-      content: `${emojis.response.success} Successfully reloaded **${command.slash.name}**!`
+      content: `${emojis.response.success} Successfully reloaded **${command.config.data.name}**!`
     });
   } catch (err) {
     interaction.reply({
-      content: `${emojis.response.error} An error has occured while re-loading **${command.slash.name}**, click to reveal:\n\n||${err.stack || err}||`,
+      content: `${emojis.response.error} An error has occured while re-loading **${command.config.data.name}**, click to reveal:\n\n||${err.stack || err}||`,
       ephemeral: true
     });
     console.log(err.stack || err);
   }
-};
-
-exports.config = {
-  enabled: true,
-  required: true,
+}, {
   permLevel: 'Developer',
-  clientPermissions: [],
-  userPermissions: [],
-  throttling: {
-    usages: 1,
-    duration: 5
-  }
-};
-
-exports.slash = {
-  description: 'Reload a command',
-  enabled: true,
-  globalCommand: false,
-  testCommand: true,
-  serverIds: [],
-  options: [
-    {
-      name: 'command',
-      description: 'The command to reload',
-      required: true,
-      type: 3
-    }
-  ],
-  listeners: [
-    {
-      customId: 'custom_id',
-      onClick: async function (client, interaction, guildSettings) {
-
+  data: {
+    description: 'Reload a command',
+    options: [
+      {
+        name: 'command',
+        description: 'The command to reload',
+        required: true,
+        type: 3
       }
-    }
-  ]
-};
+    ],
+  }
+});

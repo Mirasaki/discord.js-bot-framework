@@ -11,11 +11,11 @@ module.exports.ThrottleModel = ThrottleModel;
 
 module.exports.throttleCommand = async (client, _userId, cmd) => {
   if (!cmd || typeof cmd !== 'object') throw new TypeError('An invalid command was provided');
-  const { config, slash } = cmd;
-  const { throttling } = config;
-  if (throttling === false) return false;
-  const cmdName = slash.name;
-  const cmdCd = parseInt(throttling.duration * 1000);
+  const { config } = cmd;
+  const { cooldown } = config;
+  if (cooldown === false) return false;
+  const cmdName = config.data.name;
+  const cmdCd = parseInt(cooldown.duration * 1000);
   if (!cmdCd || cmdCd < 0) return false;
   let data = await ThrottleModel.findOne({ _userId, _command: cmdName });
   if (!data) {
@@ -25,8 +25,8 @@ module.exports.throttleCommand = async (client, _userId, cmd) => {
   } else {
     const nonExpired = data._usages.filter((timestamp) => Date.now() < (timestamp + cmdCd));
     data._usages = nonExpired;
-    if (nonExpired.length >= throttling.usages) {
-      return `${client.json.emojis.response.error} {{user}}, you can use **\`${slash.name}\`** again in ${
+    if (nonExpired.length >= cooldown.usages) {
+      return `${client.json.emojis.response.error} {{user}}, you can use **\`${config.data.name}\`** again in ${
         Number.parseFloat(((nonExpired[0] + cmdCd) - Date.now()) / 1000).toFixed(2)
       } seconds`;
     } else {

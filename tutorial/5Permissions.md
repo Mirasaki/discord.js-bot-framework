@@ -33,12 +33,12 @@ In every command file, you should declare the required Discord permissions to ex
 
 In the configuration export we have `clientPermissions` and `userPermissions`
 ```javascript
-exports.config = {
-  ...
+module.exports = new Command(() => {
+  // Code
+}, {
   clientPermissions: ['EMBED_LINKS'],
   userPermissions: [],
-  ...
-}
+});
 ```
 The line `clientPermissions: ['EMBED_LINKS'],` tells the client that it should check the permissions for the channel the command is called in, and verify that the client has `EMBED_LINKS`.
 

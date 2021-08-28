@@ -1,4 +1,5 @@
 const { MessageEmbed } = require('discord.js');
+const Command = require('../../classes/Command');
 const readableSettings = {
   modRole: 'Moderator Role',
   adminRole: 'Administrator Role',
@@ -8,7 +9,7 @@ const readableSettings = {
 };
 const { settingsCache } = require('../../mongo/settings');
 
-exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
+module.exports = new Command(async ({ client, interaction, guildSettings, args, emojis }) => {
   const { guild } = interaction;
 
   if (args[0].name === 'action') {
@@ -56,20 +57,61 @@ exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
 
   const requested = args[0].options[0].name;
   const newValue = args[0].options[0] ? args[0].options[0].options[0].value : false;
+  const globalCommands = await client.application.commands.fetch();
+
+  const updatePermissions = async (guild, permLevel) => {
+    for (const command of globalCommands.filter((e) => {
+      return client.commands.get(e.name).config.permLevel === permLevel;
+    })) {
+      guild.commands.permissions.set({
+        command: command[0],
+        permissions: [
+          {
+            id: guild.id,
+            type: 'ROLE',
+            permission: false
+          },
+          {
+            id: guild.ownerId,
+            type: 'USER',
+            permission: true
+          },
+          {
+            id: newValue,
+            type: 'ROLE',
+            permission: true
+          }
+        ]
+      });
+    }
+  };
+
   switch (requested) {
     case 'modrole': {
       if (guildSettings.permissions.modRole === newValue) return replySameValue(interaction, 'modRole');
+      if (newValue === guild.id) {
+        return interaction.reply({
+          content: `${emojis.response.error} Mod Role can't be set to \`@everyone\`!`
+        });
+      }
       guildSettings.permissions.modRole = newValue;
       await guildSettings.save();
       returnUpdated(interaction, 'modRole', guild.roles.cache.get(newValue).name);
+      updatePermissions(guild, 'Moderator');
       break;
     }
 
     case 'adminrole': {
       if (guildSettings.permissions.adminRole === newValue) return replySameValue(interaction, 'adminRole');
+      if (newValue === guild.id) {
+        return interaction.reply({
+          content: `${emojis.response.error} Admin Role can't be set to \`@everyone\`!`
+        });
+      }
       guildSettings.permissions.adminRole = newValue;
       await guildSettings.save();
       returnUpdated(interaction, 'adminRole', guild.roles.cache.get(newValue).name);
+      updatePermissions(guild, 'Administrator');
       break;
     }
 
@@ -113,7 +155,119 @@ exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
 
     default: break;
   }
-};
+}, {
+  permLevel: 'Administrator',
+  throttling: {
+    usages: 2,
+    duration: 5
+  },
+  globalCommand: true,
+  testCommand: false,
+  data: {
+    description: 'Configure the permission levels for your server, this determines what commands members can use',
+    options: [
+      {
+        name: 'permissions',
+        description: 'Change permission levels for your server',
+        required: false,
+        type: 2,
+        options: [
+          {
+            name: 'modrole',
+            description: 'Change the required role for the Moderator permission',
+            type: 1,
+            options: [
+              {
+                name: 'role',
+                description: 'The required role',
+                type: 8,
+                required: true
+              }
+            ]
+          },
+          {
+            name: 'adminrole',
+            description: 'Change the required role for the Administrator permission',
+            type: 1,
+            options: [
+              {
+                name: 'role',
+                description: 'The required role',
+                type: 8,
+                required: true
+              }
+            ]
+          },
+          {
+            name: 'notice',
+            description: 'Send a message when someone tries to use a command they don\'t have access to',
+            type: 1,
+            options: [
+              {
+                name: 'notice',
+                description: 'Enable or disable the permissions notice',
+                type: 5,
+                required: true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        name: 'channels',
+        description: 'Change dedicated channels for your server',
+        required: false,
+        type: 2,
+        options: [
+          {
+            name: 'modlog',
+            description: 'Change the modlog channel',
+            type: 1,
+            options: [
+              {
+                name: 'channel',
+                description: 'The channel',
+                type: 7,
+                required: true
+              }
+            ]
+          },
+          {
+            name: 'command',
+            description: 'Change the command channel, if set, member\'s can only use commands in this channel',
+            type: 1,
+            options: [
+              {
+                name: 'channel',
+                description: 'The channel',
+                type: 7,
+                required: true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        name: 'action',
+        description: 'Other settings functionality',
+        type: 2,
+        required: false,
+        options: [
+          {
+            name: 'reset',
+            description: 'Reset your settings',
+            type: 1
+          },
+          {
+            name: 'view',
+            description: 'View your settings',
+            type: 1
+          }
+        ]
+      }
+    ],
+  }
+});
 
 const replySameValue = (interaction, setting) => {
   return interaction.reply({
@@ -138,133 +292,4 @@ const addField = (interaction, embed, key, value, counter) => {
   } else {
     embed.addField(`__${counter}__ ${readableSettings[key]}`, `${!value ? 'None!' : `${value}`}`, false);
   }
-};
-
-exports.config = {
-  enabled: true,
-  required: true,
-  permLevel: 'Administrator',
-  clientPermissions: [],
-  userPermissions: [],
-  throttling: {
-    usages: 2,
-    duration: 5
-  }
-};
-
-exports.slash = {
-  description: 'Configure the permission levels for your server, this determines what commands members can use',
-  enabled: true,
-  globalCommand: true,
-  testCommand: false,
-  serverIds: [],
-  options: [
-    {
-      name: 'permissions',
-      description: 'Change permission levels for your server',
-      required: false,
-      type: 2,
-      options: [
-        {
-          name: 'modrole',
-          description: 'Change the required role for the Moderator permission',
-          type: 1,
-          options: [
-            {
-              name: 'role',
-              description: 'The required role',
-              type: 8,
-              required: true
-            }
-          ]
-        },
-        {
-          name: 'adminrole',
-          description: 'Change the required role for the Administrator permission',
-          type: 1,
-          options: [
-            {
-              name: 'role',
-              description: 'The required role',
-              type: 8,
-              required: true
-            }
-          ]
-        },
-        {
-          name: 'notice',
-          description: 'Send a message when someone tries to use a command they don\'t have access to',
-          type: 1,
-          options: [
-            {
-              name: 'notice',
-              description: 'Enable or disable the permissions notice',
-              type: 5,
-              required: true
-            }
-          ]
-        }
-      ]
-    },
-    {
-      name: 'channels',
-      description: 'Change dedicated channels for your server',
-      required: false,
-      type: 2,
-      options: [
-        {
-          name: 'modlog',
-          description: 'Change the modlog channel',
-          type: 1,
-          options: [
-            {
-              name: 'channel',
-              description: 'The channel',
-              type: 7,
-              required: true
-            }
-          ]
-        },
-        {
-          name: 'command',
-          description: 'Change the command channel, if set, member\'s can only use commands in this channel',
-          type: 1,
-          options: [
-            {
-              name: 'channel',
-              description: 'The channel',
-              type: 7,
-              required: true
-            }
-          ]
-        }
-      ]
-    },
-    {
-      name: 'action',
-      description: 'Other settings functionality',
-      type: 2,
-      required: false,
-      options: [
-        {
-          name: 'reset',
-          description: 'Reset your settings',
-          type: 1
-        },
-        {
-          name: 'view',
-          description: 'View your settings',
-          type: 1
-        }
-      ]
-    }
-  ],
-  listeners: [
-    {
-      customId: 'custom_id',
-      onClick: async function (client, interaction, guildSettings) {
-
-      }
-    }
-  ]
 };

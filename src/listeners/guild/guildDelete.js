@@ -1,12 +1,12 @@
 const { MessageEmbed } = require('discord.js');
-const { logger } = require('../../handlers/logger');
+const { log } = require('../../handlers/logger');
 const { parseSnakeCaseArray, getTimeSince } = require('../../utils/tools');
 
 module.exports = async (client, guild) => {
   if (!guild.available) return;
   const channel = client.channels.cache.get(client.json.config.ids.serverJoinLeaveChannel);
   if (!channel || channel.type !== 'GUILD_TEXT') return;
-  logger.info(`[GUILD REMOVE] ${guild.name} has removed the bot! Members: ${guild.memberCount}`);
+  log(`[GUILD REMOVE] ${guild.name} has removed the bot! Members: ${guild.memberCount}`, 'info');
   await channel.send({
     embeds: [
       new MessageEmbed({

@@ -18,7 +18,8 @@
 - Run `npm i` to install all dependencies
 
 **6)** Copy and paste `.env.example` from `config/`, and rename it to `.env`
-- Provide all your configuration values in this file
+  - Provide all your configuration values in this file
+  - Also provide the values in `config.json`
 
 **7)** Use `node .` to start the application or `npm run dev` if you have `nodemon` installed for automatic restarts on changes
 
@@ -34,6 +35,7 @@
 **5)** Copy and paste `.env.example` from `config/`, and rename it to `.env`
 
 **6)** Open the new `.env` file and provide all your configuration values
+  - Also provide the values in `config.json`
 
 **7)** Use `node .` to start the application or `npm run dev` if you have `nodemon` installed for automatic restarts on changes
 

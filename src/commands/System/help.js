@@ -1,18 +1,20 @@
-const { MessageEmbed } = require('discord.js');
-const { titleCase } = require('../../utils/tools');
+/* eslint-disable indent */
+const { MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
+const { titleCase, getBotInvite } = require('../../utils/tools');
 const { permLevels } = require('../../handlers/permissions');
 const { stripIndents } = require('common-tags');
+const Command = require('../../classes/Command');
 
-exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
+module.exports = new Command(({ client, interaction, guildSettings, args, emojis }) => {
   const { channel, member, guild } = interaction;
   const { permissionLevel } = member.perms;
 
   if (!args[0]) {
     const authorCommands = client.commands.filter(cmd => permLevels[cmd.config.permLevel] <= permissionLevel);
     const commands = authorCommands
-      .sort((a, b) => a.slash.category > b.slash.category
+      .sort((a, b) => a.config.data.category > b.config.data.category
         ? 1
-        : ((a.slash.name > b.slash.name && a.slash.category === b.slash.category)
+        : ((a.config.data.name > b.config.data.name && a.config.data.category === b.config.data.category)
           ? 1
           : -1));
 
@@ -20,12 +22,12 @@ exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
     let currentCategory = '';
 
     commands.forEach(command => {
-      const workingCategory = titleCase(command.slash.category);
+      const workingCategory = titleCase(command.config.data.category);
       if (currentCategory !== workingCategory) {
         embedText += `\n\n***__${workingCategory}__***\n`;
         currentCategory = workingCategory;
       }
-      embedText += `\`${command.slash.name}\` `;
+      embedText += `\`${command.config.data.name}\` `;
     });
     return interaction.reply({
       embeds: [
@@ -35,6 +37,22 @@ exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
           .setColor(client.json.colors.main)
           .setDescription(embedText)
           .addField('Detailed Command Information', '**/**help <any command name>')
+      ],
+      components: [
+        new MessageActionRow()
+          .addComponents(new MessageButton({
+            style: 'LINK',
+            label: 'Invite me',
+            emoji: '☑️',
+            url: getBotInvite(client)
+          }),
+          new MessageButton({
+            style: 'LINK',
+            label: 'Get Support',
+            emoji: '🙋',
+            url: client.json.config.links.supportServer
+          })
+        )  
       ]
     });
   }
@@ -47,7 +65,8 @@ exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
       ephemeral: true
     });
   }
-  const { config, slash } = command;
+  const { config } = command;
+  const { data } = config;
   const { throttling } = config;
   const fields = [];
 
@@ -65,35 +84,15 @@ exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
     embeds: [
       new MessageEmbed({ fields })
         .setColor(client.json.colors.main)
-        .setAuthor(titleCase(slash.name))
-        .setDescription(stripIndents`${slash.description}${
-          config.nsfw === true
-            ? `\n\n**SFW:** ${emojis.response.error}\n`
-            : '\n\n'
-        }**Category:** ${slash.category}
-          **Max Uses:** ${
-  throttling
-    ? `${
-      throttling.usages === 1
-        ? '1 time'
-        : `${throttling.usages} times`
-    } in ${
-      throttling.duration === 1
-        ? '1 second'
-        : `${throttling.duration} seconds`
-    }`
-    : 'No cooldown!'
-}
-          **Slash Command:** ${
-  config && config.enabled && slash.globalCommand
-    ? emojis.response.success
-    : emojis.response.error
-}
-          **Can Be Disabled:** ${
-  config.required
-    ? emojis.response.success
-    : emojis.response.error
-}
+        .setAuthor(titleCase(data.name))
+        .setDescription(stripIndents`${data.description}${config.nsfw === true ? `\n\n**SFW:** ${emojis.response.error}\n` : '\n\n'
+        }**Category:** ${config.data.category}
+        **Max Uses:** ${throttling
+          ? `${throttling.usages === 1 ? '1 time' : `${throttling.usages} times`} in ${throttling.duration === 1 ? '1 second' : `${throttling.duration} seconds`}`
+          : 'No cooldown!'
+        }
+        ${config.testCommand ? `**Test Command:** ${emojis.response.success}` : ''
+        }**Can Be Disabled:** ${config.required ? emojis.response.success : emojis.response.error}
         `)
         .addField('My Permissions', `${
           config.clientPermissions[0]
@@ -106,9 +105,30 @@ exports.run = ({ client, interaction, guildSettings, args, emojis }) => {
             : `${emojis.response.success} None required!`
         }`, true)
         .setFooter('')
-    ]
+    ],
   });
-};
+
+}, {
+  permLevel: 'User',
+  clientPermissions: ['EMBED_LINKS'],
+  throttling: {
+    usages: 3,
+    duration: 10
+  },
+  globalCommand: true,
+  testCommand: false,
+  data: {
+    description: 'Get help with commands!',
+    options: [
+      {
+        type: 3,
+        name: 'command',
+        required: false,
+        description: 'The command to receive information for - use /help without this argument to see all your options!'
+      }
+    ]
+  }
+});
 
 const getPermString = (client, arr, channel, id) => {
   const temp = [];
@@ -120,32 +140,4 @@ const getPermString = (client, arr, channel, id) => {
     else temp.push(`${client.json.emojis.response.error} ${perm.join(' ')}`);
   });
   return temp.join('\n> ');
-};
-
-exports.config = {
-  enabled: true,
-  required: true,
-  permLevel: 'User',
-  clientPermissions: [],
-  userPermissions: ['EMBED_LINKS'],
-  throttling: {
-    usages: 3,
-    duration: 10
-  }
-};
-
-exports.slash = {
-  description: 'Get an overview on all the available commands!',
-  enabled: true,
-  globalCommand: true,
-  testCommand: false,
-  serverIds: [],
-  options: [
-    {
-      type: 3,
-      name: 'command',
-      required: false,
-      description: 'The command to receive information for - use /help without this argument to see all your options!'
-    }
-  ]
 };

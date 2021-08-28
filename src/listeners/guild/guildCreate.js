@@ -1,12 +1,15 @@
 const { MessageEmbed } = require('discord.js');
-const { logger } = require('../../handlers/logger');
+const { log } = require('../../handlers/logger');
 const { parseSnakeCaseArray, getTimeSince } = require('../../utils/tools');
+let globalCommands;
 
 module.exports = async (client, guild) => {
   if (!guild.available) return;
   const channel = client.channels.cache.get(client.json.config.ids.serverJoinLeaveChannel);
   if (!channel || channel.type !== 'GUILD_TEXT') return;
-  logger.info(`[GUILD JOIN] ${guild.name} has added the bot! Members: ${guild.memberCount}`);
+  log(`[GUILD JOIN] ${guild.name} has added the bot! Members: ${guild.memberCount}`, 'success');
+
+  // Send information embed to channel declared in /config/config.json
   await channel.send({
     embeds: [
       new MessageEmbed({
@@ -23,5 +26,32 @@ module.exports = async (client, guild) => {
           getTimeSince(guild.createdAt)
         } Ago`)
     ]
+  }).catch((err) => {
+    log('Encountered error while trying to send [GUILD-JOIN] embed, are you using the correct ids.serverJoinLeaveChannel in your config.json?', 'error');
+    console.log(err);
   });
+
+  if (!globalCommands) globalCommands = await client.application.commands.fetch();
+  for (const command of globalCommands.filter((e) => {
+    const clientCmd = client.commands.get(e.name);
+    const permLevel = clientCmd.config.permLevel;
+    return permLevel === 'Server Owner' || permLevel === 'Moderator' || permLevel === 'Administrator';
+  })) {
+    guild.commands.permissions.set({
+      command: command[0],
+      permissions: [
+        {
+          id: guild.id,
+          type: 'ROLE',
+          permission: false
+        },
+        {
+          id: guild.ownerId,
+          type: 'USER',
+          permission: true
+        }
+      ]
+    });
+  }
+
 };

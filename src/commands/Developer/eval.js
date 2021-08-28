@@ -1,13 +1,13 @@
 const { MessageEmbed } = require('discord.js');
+const Command = require('../../classes/Command');
 
-exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
+module.exports = new Command(async ({ client, interaction, guildSettings, args, emojis }) => {
   let evaled;
-
   try {
-
     const startTime = process.hrtime();
     const input = args[0].value;
     const code = input.replace(/[“”]/g, '"').replace(/[‘’]/g, '\'').replace(/```js/g, '').replace(/```/g, '');
+
     // eslint-disable-next-line no-eval
     evaled = eval(code);
     if (evaled instanceof Promise) evaled = await evaled;
@@ -39,11 +39,25 @@ exports.run = async ({ client, interaction, guildSettings, args, emojis }) => {
     }
   } catch (err) {
     return interaction.reply({
-      content: `Error: \`\`\`xl\n${clean(err)}\`\`\``,
+      content: `Error: \`\`\`xl\n${clean(err.stack || err)}\`\`\``,
       ephemeral: true
     });
   }
-};
+}, {
+  permLevel: 'Developer',
+  clientPermissions: ['ATTACH_FILES', 'EMBED_LINKS'],
+  data: {
+    description: 'Evaluate Javascript code',
+    options: [
+      {
+        type: 'STRING',
+        required: true,
+        name: 'code',
+        description: 'The Javascript code to execute'
+      }
+    ]
+  }
+});
 
 const clean = (text) => {
   if (typeof (text) === 'string') {
@@ -55,22 +69,4 @@ const clean = (text) => {
   } else {
     return text;
   }
-};
-
-exports.config = {
-  permLevel: 'Developer'
-};
-
-exports.slash = {
-  description: 'Evaluate Javascript code',
-  globalCommand: false,
-  testCommand: true,
-  options: [
-    {
-      type: 'STRING',
-      required: true,
-      name: 'code',
-      description: 'The Javascript code to execute'
-    }
-  ]
 };

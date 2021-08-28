@@ -5,24 +5,16 @@ Before we start, in order to receive some events, you need the required [intents
 
 Take a look at our `src/listeners` folder
 ```
-src/
-  listeners/
-
-    client/
-      |
-      ready.js                  // Emitted when the client is ready to receive interactions/Discord events
-
-    guild/
-      |
-      guildCreate.js            // Emitted when the client joins a new server
-      guildDelete.js            // Emitted when the client is removed from a server
-
-    interaction/
-      |
-      commandInteraction.js     // Emitted when we determine a received interaction is a Slash Command
-      componentInteraction.js   // Emitted when we determine a received interaction is a Component Interaction, like a Button Click
-      interactionCreate.js      // Emitted when we receive any interaction, useful to built upon when more interactions get added to the public API
-      selectMenuInteraction.js  // Emitted when we determine a received interaction is a Select Menu Click
+src
+├── listeners
+│   ├── client
+│   │   └── ready.js                  // Emitted when the client is ready to receive interactions/Discord events
+│   ├── guild
+│   │   ├── guildCreate.js            // Emitted when the client joins a new server
+│   │   └── guildDelete.js            // Emitted when the client is removed from a server
+│   └── interaction
+│       └── interactionCreate.js
+...
 ```
 
 Now the structure ***really*** doesn't matter, the only reason it's structured like this is my personal preference. Feel free to remove sub-folders like `client/`, `guild/` and `interaction/` or even move your `.js` files to **deeeeep** nested folders, it really doesn't matter and it's going to work fine.
@@ -38,12 +30,11 @@ Client is received first, after which we receive the guild object
   - If you want to listen to roleCreate simply add a file named `roleCreate.js`
 - Initialize the file:
 ```javascript
-module.exports = async (client, ...res) => {
+module.exports = async (client, ...received) => {
   // Code
 }
 ```
-ps. "...res" should be replaced by whatever you're receiving for that event
 - That's all, your new event is now properly set-up!
 
-[Continue to **4) Component Interactions**](./4ComponentInteractions.md)
+[Continue to **4) Permissions**](./4Permissions.md)
 

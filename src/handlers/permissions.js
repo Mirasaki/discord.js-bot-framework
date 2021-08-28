@@ -114,7 +114,7 @@ module.exports.checkCommandPermissions = async (client, member, channel, cmd, in
   const { permissionName, permissionLevel } = userPermLevel;
   const embed = {
     color: 'RED',
-    title: `${client.json.emojis.response.error} There was a problem while using "/${cmd.slash.name}" in #${channel.name}`,
+    title: `${client.json.emojis.response.error} There was a problem while using "/${cmd.config.data.name}" in #${channel.name}`,
     fields: []
   };
 
