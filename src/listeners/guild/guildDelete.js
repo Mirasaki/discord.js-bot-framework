@@ -1,5 +1,6 @@
 const { MessageEmbed } = require('discord.js');
 const { log } = require('../../handlers/logger');
+const { getSettingsCache, settingsCache } = require('../../mongo/settings');
 const { parseSnakeCaseArray, getTimeSince } = require('../../utils/tools');
 
 module.exports = async (client, guild) => {
@@ -27,4 +28,7 @@ module.exports = async (client, guild) => {
         } Ago`, true)
     ]
   });
+  const settings = getSettingsCache(guild.id);
+  await settings.delete();
+  settingsCache.delete(guild.id);
 };
