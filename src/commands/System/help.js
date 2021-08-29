@@ -91,18 +91,18 @@ module.exports = new Command(({ client, interaction, guildSettings, args, emojis
           ? `${throttling.usages === 1 ? '1 time' : `${throttling.usages} times`} in ${throttling.duration === 1 ? '1 second' : `${throttling.duration} seconds`}`
           : 'No cooldown!'
         }
-        ${config.testCommand ? `**Test Command:** ${emojis.response.success}` : ''
+        ${config.testCommand ? `**Test Command:** ${emojis.response.success}\n` : ''
         }**Can Be Disabled:** ${config.required ? emojis.response.success : emojis.response.error}
         `)
         .addField('My Permissions', `${
           config.clientPermissions[0]
             ? `> ${getPermString(client, config.clientPermissions, channel, client.user.id)}`
-            : `${emojis.response.success} None required!`
+            : `> ${emojis.response.success} None required!`
         }`, true)
         .addField('Your Permissions', `${
           config.userPermissions[0]
             ? `> ${getPermString(client, config.userPermissions, channel, member.id)}`
-            : `${emojis.response.success} None required!`
+            : `> ${emojis.response.success} None required!`
         }`, true)
         .setFooter('')
     ],
