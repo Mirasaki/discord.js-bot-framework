@@ -45,8 +45,7 @@ module.exports = async (client, guild) => {
           id: guild.id,
           type: 'ROLE',
           permission: false
-        },
-        {
+        }, {
           id: guild.ownerId,
           type: 'USER',
           permission: true
@@ -54,5 +53,4 @@ module.exports = async (client, guild) => {
       ]
     });
   }
-
 };
