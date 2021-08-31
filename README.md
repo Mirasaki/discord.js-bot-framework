@@ -4,7 +4,6 @@
 # discord.js-bot-framework
 [![CodeFactor](https://www.codefactor.io/repository/github/destinovant/discord.js-bot-framework/badge?s=da41abe64c6592824d6ad1b4d9ad789d21dfa122)](https://www.codefactor.io/repository/github/destinovant/discord.js-bot-framework)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/7090099b5a5d4a1c9bd83602b326fa82)](https://app.codacy.com/gh/Destinovant/discord.js-bot-framework?utm_source=github.com&utm_medium=referral&utm_content=Destinovant/discord.js-bot-framework&utm_campaign=Badge_Grade_Settings)
 
 This is a framework build on top of [discord.js](https://github.com/discordjs/discord.js "discord.js on Github") for quickly and easily creating powerful [Discord](https://discord.com/ "Official Discord Website") bots. You don't need much Javascript experience to get started on a project using this framework, if you want to quickly add new commands, check out [this guide to adding new commands](./tutorial/2AddingCommands.md). Still not sure where to start? Come join my [Discord Server](https://discord.gg/V8N5QqD8qX), where I'll try and answer all the questions you have.
 
