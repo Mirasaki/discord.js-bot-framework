@@ -1,5 +1,6 @@
 const { MessageEmbed } = require('discord.js');
 const { log } = require('../../handlers/logger');
+const { setDefaultSlashPerms } = require('../../handlers/permissions');
 const { parseSnakeCaseArray, getTimeSince } = require('../../utils/tools');
 let globalCommands;
 
@@ -37,20 +38,5 @@ module.exports = async (client, guild) => {
     const clientCmd = client.commands.get(e.name);
     const permLevel = clientCmd.config.permLevel;
     return permLevel === 'Server Owner' || permLevel === 'Moderator' || permLevel === 'Administrator';
-  })) {
-    guild.commands.permissions.set({
-      command: command[0],
-      permissions: [
-        {
-          id: guild.id,
-          type: 'ROLE',
-          permission: false
-        }, {
-          id: guild.ownerId,
-          type: 'USER',
-          permission: true
-        }
-      ]
-    });
-  }
+  })) await setDefaultSlashPerms(guild, command[0], [guild.ownerId]);
 };

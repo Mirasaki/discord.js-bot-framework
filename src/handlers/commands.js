@@ -4,6 +4,7 @@ const { log } = require('./logger');
 const { isEqual } = require('lodash');
 const CommandError = require('../classes/CommandError');
 const nodePath = require('path');
+const { setDefaultSlashPerms } = require('./permissions');
 
 module.exports.topLevelCommandFolder = nodePath.join('src', 'commands');
 
@@ -52,6 +53,9 @@ module.exports.loadSlashCommands = async (client) => {
   let globalCommands = await commands.fetch();
   const testServer = client.guilds.cache.get(client.json.config.ids.testServer);
   if (!testServer) throw new Error(`Please provide a testServer id in config/config.json and make sure you added the bot to that server.\nHeres an invite link: ${getBotInvite(client)}`);
+
+  // await commands.set([]);
+  // return await testServer.commands.set([]);
 
   for (const cmd of client.commands) {
     const consoleOutput = [];
@@ -122,62 +126,7 @@ module.exports.loadSlashCommands = async (client) => {
       else if (!testCommand) {
         const cmd = await testServer.commands.create(data);
         consoleOutput.push('    T Created Test Command');
-
-        const applyUserPerms = (ids) => {
-          if (Array.isArray(ids)) {
-            for (const id of ids) {
-              testServer.commands.permissions.add({
-                command: cmd.id,
-                permissions: [
-                  {
-                    id,
-                    type: 'USER',
-                    permission: true
-                  }
-                ]
-              });
-            }
-          } else if (typeof ids === 'string') {
-            testServer.commands.permissions.set({
-              command: cmd.id,
-              permissions: [
-                {
-                  id: testServer.id,
-                  type: 'ROLE',
-                  permission: false
-                },
-                {
-                  id: ids,
-                  type: 'USER',
-                  permission: true
-                }
-              ]
-            });
-          } else throw new TypeError('Expected either a String or Array');
-        };
-        const permissions = client.json.config.permissions;
-        switch (config.permLevel) {
-          case 'Bot Owner': applyUserPerms(client.json.config.permissions.owner);break;
-          case 'Developer': {
-            applyUserPerms(permissions.owner);
-            applyUserPerms(permissions.developers);
-            break;
-          }
-          case 'Bot Administrator': {
-            applyUserPerms(permissions.owner);
-            applyUserPerms(permissions.developers);
-            applyUserPerms(permissions.admins);
-            break;
-          }
-          case 'Bot Support': {
-            applyUserPerms(permissions.owner);
-            applyUserPerms(permissions.developers);
-            applyUserPerms(permissions.admins);
-            applyUserPerms(permissions.support);
-            break;
-          }
-          default: break;
-        }
+        await setDefaultSlashPerms(testServer, cmd.id);
       }
     }
     else if (testCommand) testServer.commands.delete(testCommand) && consoleOutput.push('    T Deleted test command');

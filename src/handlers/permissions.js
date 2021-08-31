@@ -186,3 +186,84 @@ module.exports.hasChannelPerms = (userId, channel, permArray) => {
   if (!missing[0]) return true;
   else return missing;
 };
+
+module.exports.setDefaultSlashPerms = async (guild, cmdId, optional = []) => {
+  const permissions = [
+    {
+      id: guild.id,
+      type: 'ROLE',
+      permission: false
+    },
+    {
+      id: config.permissions.owner,
+      type: 'USER',
+      permission: true
+    }
+  ];
+  const addUserPerms = (arr) => {
+    for (const id of arr) {
+      permissions.push({
+        id,
+        type: 'USER',
+        permission: true
+      });
+    }
+  };
+  if (Array.isArray(optional) && optional[0]) addUserPerms(optional);
+  switch (config.permLevel) {
+    case 'Bot Owner': {
+      await guild.commands.permissions.set({
+        command: cmdId,
+        permissions
+      });
+      break;
+    }
+    case 'Developer': {
+      addUserPerms(config.permissions.developers);
+      await guild.commands.permissions.set({
+        command: cmdId,
+        permissions
+      });
+      break;
+    }
+    case 'Bot Administrator': {
+      addUserPerms(config.permissions.developers);
+      addUserPerms(config.permissions.admins);
+      await guild.commands.permissions.set({
+        command: cmdId,
+        permissions
+      });
+      break;
+    }
+    // Dont override anything for User commands
+    case 'User': break;
+    // Includes Bot Support - Administrator - Moderator
+    default: {
+      addUserPerms(config.permissions.developers);
+      addUserPerms(config.permissions.admins);
+      addUserPerms(config.permissions.support);
+      await guild.commands.permissions.set({
+        command: cmdId,
+        permissions
+      });
+      break;
+    }
+  }
+};
+
+module.exports.addRoleSlashPerms = async (client, globalCommands, permLevel, guild, roleId) => {
+  for (const command of globalCommands.filter((e) => {
+    return client.commands.get(e.name).config.permLevel === permLevel;
+  })) {
+    await this.setDefaultSlashPerms(guild, command[0], [guild.ownerId]);
+    const permissions = [{
+      id: roleId,
+      type: 'ROLE',
+      permission: true
+    }];
+    await guild.commands.permissions.add({
+      command: command[0],
+      permissions
+    });
+  }
+};

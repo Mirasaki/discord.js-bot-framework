@@ -1,5 +1,6 @@
 const { MessageEmbed } = require('discord.js');
 const Command = require('../../classes/Command');
+const { addRoleSlashPerms } = require('../../handlers/permissions');
 const readableSettings = {
   modRole: 'Moderator Role',
   adminRole: 'Administrator Role',
@@ -59,33 +60,6 @@ module.exports = new Command(async ({ client, interaction, guildSettings, args, 
   const newValue = args[0].options[0] ? args[0].options[0].options[0].value : false;
   const globalCommands = await client.application.commands.fetch();
 
-  const updatePermissions = async (guild, permLevel) => {
-    for (const command of globalCommands.filter((e) => {
-      return client.commands.get(e.name).config.permLevel === permLevel;
-    })) {
-      guild.commands.permissions.set({
-        command: command[0],
-        permissions: [
-          {
-            id: guild.id,
-            type: 'ROLE',
-            permission: false
-          },
-          {
-            id: guild.ownerId,
-            type: 'USER',
-            permission: true
-          },
-          {
-            id: newValue,
-            type: 'ROLE',
-            permission: true
-          }
-        ]
-      });
-    }
-  };
-
   switch (requested) {
     case 'modrole': {
       if (guildSettings.permissions.modRole === newValue) return replySameValue(interaction, 'modRole');
@@ -97,7 +71,7 @@ module.exports = new Command(async ({ client, interaction, guildSettings, args, 
       guildSettings.permissions.modRole = newValue;
       await guildSettings.save();
       returnUpdated(interaction, 'modRole', guild.roles.cache.get(newValue).name);
-      updatePermissions(guild, 'Moderator');
+      addRoleSlashPerms(client, globalCommands, 'Moderator', guild, newValue);
       break;
     }
 
@@ -111,7 +85,7 @@ module.exports = new Command(async ({ client, interaction, guildSettings, args, 
       guildSettings.permissions.adminRole = newValue;
       await guildSettings.save();
       returnUpdated(interaction, 'adminRole', guild.roles.cache.get(newValue).name);
-      updatePermissions(guild, 'Administrator');
+      addRoleSlashPerms(client, globalCommands, 'Administrator', guild, newValue);
       break;
     }
 
