@@ -29,7 +29,7 @@ module.exports = new Command(({ client, interaction, guildSettings, args, emojis
     '793894728847720468' // Support Server
   ],
   data: {
-    description: 'Test functsionality with this command.',
+    description: 'Test functionality with this command.',
     options: [
       {
         name: 'test',

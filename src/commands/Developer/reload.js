@@ -26,7 +26,7 @@ module.exports = new Command(({ client, interaction, guildSettings, args, emojis
 }, {
   permLevel: 'Developer',
   data: {
-    description: 'Reload a command',
+    description: 'Reloads a command.',
     options: [
       {
         name: 'command',
