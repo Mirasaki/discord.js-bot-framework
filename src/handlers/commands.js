@@ -122,6 +122,8 @@ module.exports.loadSlashCommands = async (client) => {
 
     // Test server - Test commands setup
     if (config.testCommand === true) {
+      // Update Permissions for slash commands
+      if (testCommand) setDefaultSlashPerms(testServer, testCommand.id);
       if (testCommand && dataChanged(data, testCommand)) testServer.commands.edit(testCommand, data) && consoleOutput.push('    T Edited test command with new data');
       else if (!testCommand) {
         const cmd = await testServer.commands.create(data);
