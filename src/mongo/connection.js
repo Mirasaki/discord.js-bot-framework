@@ -5,7 +5,6 @@ module.exports = async () => {
   await connect(process.env.MONGO_LINK, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    useFindAndModify: false
   }).catch(error => console.log(error));
 };
 
