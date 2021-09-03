@@ -1,8 +1,5 @@
 #### A guide explaining and showing you how to work with command in this framework and how to quickly/easily add new ones
-> Making changes to ***global*** test commands can take up to 1 hour to process, this is because of Discord's API, not because of this framework. Please be patient when editing global commands and use test-server command or even server-specific commands if possible when actively working on a command!
-
-## Quick notes on the Command class
-- The command category will always be the parent directory's name
+> Making changes to ***global*** commands can take up to 1 hour to process, this is because of Discord's API, not because of this framework. Please be patient when editing global commands and use test-server command or even server-specific commands if possible when actively working on a command!
 
 ## Adding a new command to the registery
 - Copy either the [full command template](/src/commands/.fullCommandTemplate.js) or [minimal template](/src/commands/.minimalCommandTemplate.js)
@@ -33,7 +30,7 @@ module.exports = new Command(() => {
 
   // Command Cooldown
   cooldown: {
-    usages: 1,                  /* Optional | Default = false | Throttle a command, this example allows 1 usage in 5 seconds */ 
+    usages: 1,                  /* Optional | Default = 1 usage in 2 seconds | Throttle a command, this example allows 1 usage in 5 seconds */ 
     duration: 5                 /* Use { usages: 5, duration: 600 } to allow someone to use this command 5 times every 10 minutes */
   },
 
@@ -69,12 +66,12 @@ const { getBotInvite } = require('../../utils/tools');
 
 module.exports = new Command(({ client, interaction, emojis }) => {
 const botInviteLink = getBotInvite(client);
-// Replying to the received interaction
+  // Replying to the received interaction
   interaction.reply({
     // Assigning a new MessageEmbed to interaction.embeds
     embeds: [
       new MessageEmbed()
-        // Set the color to our main bot color declared in /config/colors.json
+        // Set the color to our main bot color defined in /config/colors.json
         .setColor(client.json.colors.main)
         .setDescription(
           // stripIndents removes all indentation left-over from code editors
@@ -88,10 +85,11 @@ const botInviteLink = getBotInvite(client);
     ]
   });
 }, {
+  // These are the only required values, all the others are optional
   // The required permission level to execute this command
   permLevel: 'User',
   data: {
-    // The command description
+    // The required command description
     description: 'Get the link to add this bot to other servers.'
   }
 });
