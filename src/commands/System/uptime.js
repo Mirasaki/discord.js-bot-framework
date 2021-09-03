@@ -40,6 +40,6 @@ module.exports = new Command(({ client, interaction, guildSettings, args, emojis
   globalCommand: true,
   testCommand: false,
   data: {
-    description: 'Displays bot information',
+    description: 'Displays bot information.',
   }
 });

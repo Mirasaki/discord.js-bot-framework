@@ -35,3 +35,17 @@ Complete | Notes
 Incomplete | Notes
 ---------- | -----
 ⌛ Add support for DM commands | At the time of writing this, Slash Commands can be called in a bots DM channel. I'd like to add full support for DM Slash Commands.
+
+<div align='center'>
+
+# Media
+### The help command - Select a command for detailed information
+![DHC](assets/DefaultHelpCommand.png)
+---
+### The help command is fully modular, it will automatically apply more Select Menus based on the amount of commands
+![MHC](assets/ModularHelpCommand.png)
+---
+### A powerful eval command, with appropriate protection to protect it from the wrong hands
+![EVAL](assets/EvalCommand.png)
+
+</div>
