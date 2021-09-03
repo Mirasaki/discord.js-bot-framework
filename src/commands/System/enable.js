@@ -1,8 +1,15 @@
 const { MessageEmbed, MessageSelectMenu, MessageActionRow } = require('discord.js');
 const { permLevels } = require('../../handlers/permissions');
 const Command = require('../../classes/Command');
+const calledRecently = new Set();
 
 module.exports = new Command(async ({ client, interaction, guildSettings, args, emojis }) => {
+  if (calledRecently.has(interaction.channel.id)) {
+    return interaction.reply({
+      content: `${emojis.response.error} ${interaction.member.toString()}, \`${interaction.commandName}\` is already active in **#${interaction.channel.name}**, please try again later.`,
+      ephemeral:  true
+    });
+  } else calledRecently.add(interaction.channel.id);
   const { member, guild } = interaction;
   const disabledCommands = guildSettings.disabledCmds;
 
@@ -89,6 +96,9 @@ module.exports = new Command(async ({ client, interaction, guildSettings, args, 
           )
       ]
     });
+  });
+  collector.on('end', () => {
+    calledRecently.delete(interaction.channel.id);
   });
 }, {
   required: true,

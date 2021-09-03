@@ -4,8 +4,15 @@ const { titleCase, getBotInvite } = require('../../utils/tools');
 const { permLevels } = require('../../handlers/permissions');
 const { stripIndents } = require('common-tags');
 const Command = require('../../classes/Command');
+const calledRecently = new Set();
 
 module.exports = new Command(async ({ client, interaction, guildSettings, args, emojis }) => {
+  if (calledRecently.has(interaction.channel.id)) {
+    return interaction.reply({
+      content: `${emojis.response.error} ${interaction.member.toString()}, \`${interaction.commandName}\` is already active in **#${interaction.channel.name}**, please try again later.`,
+      ephemeral:  true
+    });
+  } else calledRecently.add(interaction.channel.id);
   const { channel, member, guild } = interaction;
   const { permissionLevel } = member.perms;
 
@@ -121,6 +128,10 @@ module.exports = new Command(async ({ client, interaction, guildSettings, args, 
     });
   });
 
+  collector.on('end', () => {
+    calledRecently.delete(interaction.channel.id);
+  });
+
   return setTimeout(() => {
     interaction.editReply({
       content: 'This **/help** menu has expired.',
@@ -149,7 +160,6 @@ module.exports = new Command(async ({ client, interaction, guildSettings, args, 
       ]
     });
   }, 120000);
-
 }, {
   permLevel: 'User',
   clientPermissions: ['EMBED_LINKS'],
