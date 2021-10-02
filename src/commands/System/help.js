@@ -81,7 +81,7 @@ module.exports = new Command(async ({ client, interaction, guildSettings, args, 
           style: 'LINK',
           label: 'Get Support',
           emoji: '🙋',
-          url: client.json.config.links.supportServer
+          url: process.env.SUPPORT_SERVER_INVITE
         })
       )
     ])
@@ -154,7 +154,7 @@ module.exports = new Command(async ({ client, interaction, guildSettings, args, 
           style: 'LINK',
           label: 'Get Support',
           emoji: '🙋',
-          url: client.json.config.links.supportServer
+          url: process.env.SUPPORT_SERVER_INVITE
         })
         )
       ]

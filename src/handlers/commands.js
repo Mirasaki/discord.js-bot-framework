@@ -51,7 +51,7 @@ module.exports.loadSlashCommands = async (client) => {
   const { application } = client;
   const { commands } = application;
   let globalCommands = await commands.fetch();
-  const testServer = client.guilds.cache.get(client.json.config.ids.testServer);
+  const testServer = client.guilds.cache.get(process.env.TEST_SERVER_ID);
 
   // await commands.set([]);
   // return await testServer.commands.set([]);
@@ -80,7 +80,7 @@ module.exports.loadSlashCommands = async (client) => {
       try {
         if (globalCommand) commands.delete(globalCommand) && consoleOutput.push('    G Disabled global command');
         if (testCommand && testServer) testServer.commands.delete(testCommand) && consoleOutput.push('    T Disabled test command');
-        for (const entry of client.guilds.cache.filter((guild) => guild.id !== client.json.config.ids.testServer)) {
+        for (const entry of client.guilds.cache.filter((guild) => guild.id !== process.env.TEST_SERVER_ID)) {
           const guild = entry[1];
           const guildCmds = await guild.commands.fetch();
           const guildClientCmd = guildCmds.find((e) => e.name === data.name && e.client.user.id === client.user.id);
@@ -122,18 +122,18 @@ module.exports.loadSlashCommands = async (client) => {
     // Test server - Test commands setup
     if (config.testCommand === true) {
       // Update Permissions for slash commands
-      if (testCommand) setDefaultSlashPerms(testServer, testCommand.id);
+      if (testCommand) setDefaultSlashPerms(testServer, testCommand.id, config.permLevel);
       if (testCommand && dataChanged(data, testCommand)) testServer.commands.edit(testCommand, data) && consoleOutput.push('    T Edited test command with new data');
       else if (!testCommand) {
-        const cmd = await testServer.commands.create(data);
+        const newCmd = await testServer.commands.create(data);
         consoleOutput.push('    T Created Test Command');
-        await setDefaultSlashPerms(testServer, cmd.id);
+        await setDefaultSlashPerms(testServer, newCmd.id, config.permLevel);
       }
     }
     else if (testCommand) testServer.commands.delete(testCommand) && consoleOutput.push('    T Deleted test command');
 
     if (Array.isArray(config.serverIds)) {
-      for (const entry of client.guilds.cache.filter((guild) => !config.serverIds.includes(guild.id) && guild.id !== client.json.config.ids.testServer)) {
+      for (const entry of client.guilds.cache.filter((guild) => !config.serverIds.includes(guild.id) && guild.id !== process.env.TEST_SERVER_ID)) {
         const guild = entry[1];
         const guildCmds = await guild.commands.fetch(); 
         const guildClientCmd = guildCmds.find((e) => e.name === data.name && e.client.user.id === client.user.id);
@@ -141,7 +141,7 @@ module.exports.loadSlashCommands = async (client) => {
       }
       for (const serverId of config.serverIds) {
         const guild = client.guilds.cache.get(serverId);
-        if (!guild || guild.id === client.json.config.ids.testServer) continue;
+        if (!guild || guild.id === process.env.TEST_SERVER_ID) continue;
         const guildCmds = await guild.commands.fetch();
         const guildClientCmd = guildCmds.find((e) => e.name === data.name && e.client.user.id === client.user.id);
         if (!guildClientCmd) guild.commands.create(data) && consoleOutput.push(`    S Created server specific command for <${guild.name}>`);
@@ -187,8 +187,8 @@ module.exports.checkExpired = async (client) => {
     }
   }
 
-  const testServer = client.guilds.cache.get(client.json.config.ids.testServer);
-  if (!testServer) throw new Error(`Please provide a testServer id in config/config.json and make sure you added the bot to that server.\nHeres an invite link: ${getBotInvite(client)}`);
+  const testServer = client.guilds.cache.get(process.env.TEST_SERVER_ID);
+  if (!testServer) throw new Error(`Please provide a TEST_SERVER_ID in your /config/.env file and make sure you added the bot to that server.\nHeres an invite link: ${getBotInvite(client)}`);
   const testCommands = await testServer.commands.fetch();
   for (let cmd of testCommands) {
     cmd = cmd[1];

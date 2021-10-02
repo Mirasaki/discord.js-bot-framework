@@ -2,7 +2,7 @@
 const { parseSnakeCaseArray } = require('../utils/tools');
 const { Permissions } = require('discord.js');
 const { getSettingsCache } = require('../mongo/settings');
-const config = require('../../config/config.json');
+const permissions = require('../../config/permissions.json');
 const { stripIndents } = require('common-tags');
 
 const permConfig = [
@@ -65,25 +65,25 @@ const permConfig = [
   {
     level: 4,
     name: 'Bot Support',
-    hasLevel: (member) => config.permissions.support.includes(member.user.id)
+    hasLevel: (member) => permissions.support.includes(member.user.id)
   },
 
   {
     level: 5,
     name: 'Bot Administrator',
-    hasLevel: (member) => config.permissions.admins.includes(member.user.id)
+    hasLevel: (member) => permissions.admins.includes(member.user.id)
   },
 
   {
     level: 6,
     name: 'Developer',
-    hasLevel: (member) => config.permissions.developers.includes(member.user.id)
+    hasLevel: (member) => permissions.developers.includes(member.user.id)
   },
 
   {
     level: 7,
     name: 'Bot Owner',
-    hasLevel: (member) => config.permissions.owner === member.user.id
+    hasLevel: (member) => permissions.owner === member.user.id
   }
 ];
 
@@ -187,22 +187,22 @@ module.exports.hasChannelPerms = (userId, channel, permArray) => {
   else return missing;
 };
 
-module.exports.setDefaultSlashPerms = async (guild, cmdId, optional = []) => {
-  const permissions = [
+module.exports.setDefaultSlashPerms = async (guild, cmdId, permLevel, optional = []) => {
+  const cmdPermissions = [
     {
       id: guild.id,
       type: 'ROLE',
       permission: false
     },
     {
-      id: config.permissions.owner,
+      id: permissions.owner,
       type: 'USER',
       permission: true
     }
   ];
   const addUserPerms = (arr) => {
     for (const id of arr) {
-      permissions.push({
+      cmdPermissions.push({
         id,
         type: 'USER',
         permission: true
@@ -210,41 +210,42 @@ module.exports.setDefaultSlashPerms = async (guild, cmdId, optional = []) => {
     }
   };
   if (Array.isArray(optional) && optional[0]) addUserPerms(optional);
-  switch (config.permLevel) {
+  switch (permLevel) {
     case 'Bot Owner': {
       await guild.commands.permissions.set({
         command: cmdId,
-        permissions
+        permissions: cmdPermissions
       });
       break;
     }
     case 'Developer': {
-      addUserPerms(config.permissions.developers);
+      addUserPerms(permissions.developers);
       await guild.commands.permissions.set({
         command: cmdId,
-        permissions
+        permissions: cmdPermissions
       });
       break;
     }
     case 'Bot Administrator': {
-      addUserPerms(config.permissions.developers);
-      addUserPerms(config.permissions.admins);
+      addUserPerms(permissions.developers);
+      addUserPerms(permissions.admins);
       await guild.commands.permissions.set({
         command: cmdId,
-        permissions
+        permissions: cmdPermissions
       });
       break;
     }
     // Dont override anything for User commands
     case 'User': break;
+
     // Includes Bot Support - Administrator - Moderator
     default: {
-      addUserPerms(config.permissions.developers);
-      addUserPerms(config.permissions.admins);
-      addUserPerms(config.permissions.support);
+      addUserPerms(permissions.developers);
+      addUserPerms(permissions.admins);
+      addUserPerms(permissions.support);
       await guild.commands.permissions.set({
         command: cmdId,
-        permissions
+        permissions: cmdPermissions
       });
       break;
     }
@@ -255,7 +256,7 @@ module.exports.addRoleSlashPerms = async (client, globalCommands, permLevel, gui
   for (const command of globalCommands.filter((e) => {
     return client.commands.get(e.name).config.permLevel === permLevel;
   })) {
-    await this.setDefaultSlashPerms(guild, command[0], [guild.ownerId]);
+    await this.setDefaultSlashPerms(guild, command[0], permLevel, [guild.ownerId]);
     const permissions = [{
       id: roleId,
       type: 'ROLE',

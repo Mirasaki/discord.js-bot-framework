@@ -15,7 +15,7 @@ module.exports = async (client, interaction) => {
     hasChannelPerms(
       interaction.member.user.id,
       interaction.channel,
-      require('../../../config/config.json').permissions.defaultRequiredPermissions
+      require('../../../config/permissions.json').defaultRequiredPermissions
     ) !== true
   ) return;
   const { guild, user, channel } = interaction;
@@ -31,7 +31,7 @@ module.exports = async (client, interaction) => {
     || !interaction.isCommand()
   ) return;
 
-  const defaultPerms = hasChannelPerms(client.user.id, channel, client.json.config.permissions.defaultRequiredPermissions);
+  const defaultPerms = hasChannelPerms(client.user.id, channel, client.json.permissions.defaultRequiredPermissions);
   if (defaultPerms !== true) {
     return interaction.reply({
       content: `${client.json.emojis.response.error} I lack the required channel permission${
