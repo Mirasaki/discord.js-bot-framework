@@ -1,11 +1,11 @@
 const { MessageEmbed } = require('discord.js');
 const { log } = require('../../handlers/logger');
 const { getSettingsCache, settingsCache } = require('../../mongo/settings');
-const { parseSnakeCaseArray, getTimeSince } = require('../../utils/tools');
+const { parseSnakeCaseArray, getRelativeTime } = require('../../utils/tools');
 
 module.exports = async (client, guild) => {
   if (!guild.available) return;
-  const channel = client.channels.cache.get(client.json.config.ids.serverJoinLeaveChannel);
+  const channel = client.channels.cache.get(process.env.JOIN_LEAVE_CHANNEL_ID);
   if (!channel || channel.type !== 'GUILD_TEXT') return;
   log(`[GUILD REMOVE] ${guild.name} has removed the bot! Members: ${guild.memberCount}`, 'info');
   await channel.send({
@@ -21,11 +21,11 @@ module.exports = async (client, guild) => {
         .addField('Discord Boost', `${parseSnakeCaseArray([guild.premiumTier])} @ ${guild.premiumSubscriptionCount} boosts`, true)
         .addField('Features', `${parseSnakeCaseArray(guild.features) || 'None!'}`, false)
         .addField('Created at', `${new Date(guild.createdAt).toLocaleString()}\n${
-          getTimeSince(guild.createdAt)
-        } Ago`, true)
+          getRelativeTime(guild.createdAt)
+        }`, true)
         .addField('Joined at', `${new Date(guild.joinedAt).toLocaleString()}\n${
-          getTimeSince(guild.joinedAt)
-        } Ago`, true)
+          getRelativeTime(guild.joinedAt)
+        }`, true)
     ]
   });
   const settings = getSettingsCache(guild.id);

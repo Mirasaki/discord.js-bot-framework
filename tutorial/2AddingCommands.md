@@ -36,7 +36,7 @@ module.exports = new Command(() => {
 
   // Command State
   globalCommand: false,         /* Optional | Default = false | Whether or not this Slash Command is enabled globally */
-  testCommand: true,            /* Optional | Default = true | Whether or not this Slash Command is also registered as a server-specific slash command on your test server (Defined in config/config.json) */
+  testCommand: true,            /* Optional | Default = true | Whether or not this Slash Command is also registered as a server-specific slash command on your test server (Defined in your .env file) */
   serverIds: [],
 
   // Slash Command data - https://discord.js.org/#/docs/main/stable/typedef/ApplicationCommandData

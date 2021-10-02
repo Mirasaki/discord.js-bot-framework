@@ -1,6 +1,6 @@
 const nodePath = require('path');
 const { permLevels, validatePermissions } = require('../handlers/permissions');
-const { titleCase, getTimeSince } = require('../utils/tools');
+const { titleCase, getRelativeTime } = require('../utils/tools');
 const fs = require('fs');
 const CommandError = require('../classes/CommandError.js');
 const { topLevelCommandFolder } = require('../handlers/commands');
@@ -149,8 +149,8 @@ module.exports = class Command {
       path,
       pathFromProjectRoot: path.slice(path.indexOf(topLevelCommandFolder), path.length),
       size: fileStats.size + ' bytes',
-      created: getTimeSince(fileStats.birthtimeMs) + ' ago',
-      lastEdit: getTimeSince(fileStats.mtimeMs) + ' ago'
+      created: getRelativeTime(fileStats.birthtimeMs),
+      lastEdit: getRelativeTime(fileStats.mtimeMs)
     };
     client.commands.set(data.name, this);  
   }

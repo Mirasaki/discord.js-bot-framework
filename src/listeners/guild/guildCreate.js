@@ -1,16 +1,15 @@
 const { MessageEmbed } = require('discord.js');
 const { log } = require('../../handlers/logger');
 const { setDefaultSlashPerms } = require('../../handlers/permissions');
-const { parseSnakeCaseArray, getTimeSince } = require('../../utils/tools');
+const { parseSnakeCaseArray, getRelativeTime } = require('../../utils/tools');
 let globalCommands;
 
 module.exports = async (client, guild) => {
   if (!guild.available) return;
-  const channel = client.channels.cache.get(client.json.config.ids.serverJoinLeaveChannel);
+  const channel = client.channels.cache.get(process.env.JOIN_LEAVE_CHANNEL_ID);
   if (!channel || channel.type !== 'GUILD_TEXT') return;
   log(`[GUILD JOIN] ${guild.name} has added the bot! Members: ${guild.memberCount}`, 'success');
 
-  // Send information embed to channel declared in /config/config.json
   await channel.send({
     embeds: [
       new MessageEmbed({
@@ -24,11 +23,11 @@ module.exports = async (client, guild) => {
         .addField('Discord Boost', `${parseSnakeCaseArray([guild.premiumTier])} @ ${guild.premiumSubscriptionCount} boosts`, true)
         .addField('Features', `${parseSnakeCaseArray(guild.features) || 'None!'}`, false)
         .addField('Created at', `${new Date(guild.createdAt).toLocaleString()}\n${
-          getTimeSince(guild.createdAt)
-        } Ago`)
+          getRelativeTime(guild.createdAt)
+        }`)
     ]
   }).catch((err) => {
-    log('Encountered error while trying to send [GUILD-JOIN] embed, are you using the correct ids.serverJoinLeaveChannel in your config.json?', 'error');
+    log('Encountered error while trying to send [GUILD-JOIN] embed, are you using the correct JOIN_LEAVE_CHANNEL_ID in your /config/.env file?', 'error');
     console.log(err);
   });
 
@@ -38,5 +37,5 @@ module.exports = async (client, guild) => {
     const clientCmd = client.commands.get(e.name);
     const permLevel = clientCmd.config.permLevel;
     return permLevel === 'Server Owner' || permLevel === 'Moderator' || permLevel === 'Administrator';
-  })) await setDefaultSlashPerms(guild, command[0], [guild.ownerId]);
+  })) await setDefaultSlashPerms(guild, command[0], client.commands.get(command[1].name).config.permLevel, [guild.ownerId]);
 };
