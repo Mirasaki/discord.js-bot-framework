@@ -4,13 +4,13 @@ const TIME_IN_ONE_HOUR = 1000 * 60 * 60;
 const settingSchema = Schema({
   _guildId: { type: String, required: true },
   permissions: {
-    modRole: { type: String, default: '' },
-    adminRole: { type: String, default: '' },
+    modRole: { type: String, default: null },
+    adminRole: { type: String, default: null },
     permissionNotice: { type: Boolean, default: true }
   },
   channels: {
-    modLog: { type: String, default: '' },
-    restrictCmds: { type: String, default: '' }
+    modLog: { type: String, default: null },
+    restrictCmds: { type: String, default: null }
   },
   disabledCmds: { type: Array, default: [] }
 });
