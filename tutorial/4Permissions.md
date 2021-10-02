@@ -14,7 +14,7 @@ By default, this framework comes with 8 different permission levels. You can vie
 
 **3 / Server Owner** > Checks `true` if `member.id` is the same as `guild.ownerId`
 
-## NOTE: The following permission levels can be configured [here](/config/config.json)
+## NOTE: The following permission levels can be configured [here](/config/permissions.json)
 Insert any Discord member ID into the declared empty arrays to give someone these permission levels
 
 **4 / Bot Support** > This permissions level **should** be used to allow members with this permission level to execute `Server Owner` permission level commands in any server.
@@ -47,4 +47,4 @@ The line `userPermissions: [],` tells the client that it should check if the com
 
 ### Notes
   - `VIEW_CHANNEL` and `SEND_MESSAGES` are required by default, without these permissions, we (the client) wouldn't be able to respond to interactions.
-  - Add `EMBED_LINKS` to [your default required permissions](/config/config.json) to require `EMBED_LINKS` globally, every command will now require the permission before it can be executed.
+  - Add `EMBED_LINKS` to [your default required permissions](/config/permissions.json) to require `EMBED_LINKS` globally, every command will now require the permission before it can be executed.

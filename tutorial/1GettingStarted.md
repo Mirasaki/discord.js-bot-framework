@@ -22,7 +22,7 @@
 **6)** Copy and paste `.env.example` from `config/`, and rename it to `.env` located in `config/.env`
   - Provide all your configuration values in this file
     * Get a Bot Token from [the Discord developer portal](https://www.discord.com/developers)
-  - Also provide the values in `config.json`
+  - Also provide the values in `permissions.json`
 
 **7)** Use `node .` to start the application or `npm run dev` if you have `nodemon` installed for automatic restarts on changes
 
