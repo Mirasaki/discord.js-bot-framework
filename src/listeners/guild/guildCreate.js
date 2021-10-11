@@ -32,7 +32,7 @@ module.exports = async (client, guild) => {
   });
 
   if (!guild.ownerId) return;
-  if (!globalCommands) globalCommands = await client.application.commands.fetch();
+  globalCommands ??= await client.application.commands.fetch();
   for (const command of globalCommands.filter((e) => {
     const clientCmd = client.commands.get(e.name);
     const permLevel = clientCmd.config.permLevel;

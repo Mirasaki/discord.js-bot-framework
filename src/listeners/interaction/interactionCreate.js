@@ -22,7 +22,7 @@ module.exports = async (client, interaction) => {
   let { member } = interaction;
   if (!guild || !guild.available) return;
   const guildSettings = await getSettingsCache(guild.id);
-  if (!member) member = await guild.members.fetch(user.id);
+  member ??= await guild.members.fetch(user.id);
 
   if (
     user.bot

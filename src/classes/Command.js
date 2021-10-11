@@ -133,7 +133,7 @@ module.exports = class Command {
     
     // Slash Command Data
     const { data } = config;
-    if (!data.name) data.name = splitPath[splitPath.length - 1].slice(0, splitPath.lastIndexOf('.') - 2);
+    data.name ??= splitPath[splitPath.length - 1].slice(0, splitPath.lastIndexOf('.') - 2);
     data.options = Array.isArray(data.options) ? this.getOptions(data.options) : [];
     data.type = 'CHAT_INPUT';
     if (!data.description) throw new CommandError({

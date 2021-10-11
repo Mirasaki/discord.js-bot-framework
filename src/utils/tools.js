@@ -5,7 +5,7 @@ const moment = require('moment');
 
 // getFiles() ignores files that start with "."
 module.exports.getFiles = (path, extension) => {
-  if (!nodePath.isAbsolute(path)) path = nodePath.resolve(path);
+  path ??= nodePath.resolve(path);
   let res = [];
   for (let itemInDir of readdirSync(path)) {
     itemInDir = nodePath.resolve(path, itemInDir);

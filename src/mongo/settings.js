@@ -37,10 +37,7 @@ const getSettingsFromDB = async (_guildId) => {
   let guildSettings;
   try {
     guildSettings = await GuildModel.findOne({ _guildId });
-    if (!guildSettings) {
-      const newData = new GuildModel({ _guildId });
-      guildSettings = await newData.save();
-    }
+    guildSettings ??= await new GuildModel({ _guildId }).save();
   } catch (err) {
     return console.log(err);
   }
