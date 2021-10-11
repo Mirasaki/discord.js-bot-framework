@@ -13,7 +13,7 @@ module.exports = async (client, interaction) => {
   }
   if (
     hasChannelPerms(
-      interaction.member.user.id,
+      client.user.id,
       interaction.channel,
       require('../../../config/permissions.json').defaultRequiredPermissions
     ) !== true
