@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/Destinovant/discord.js-bot-framework#readme",
   "dependencies": {
-    "chalk": "^4.1.2",
+    "chalk": "^5.0.1",
     "common-tags": "^1.8.2",
     "discord.js": "^13.6.0",
     "dotenv": "^10.0.0",
