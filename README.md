@@ -1,3 +1,7 @@
+# Archived
+This repo has been archived, don't use this. It's outdated, opinionated and overall not my best work as this was my first JavaScript project. I don't think this will be much help to anyone, but would you part ways with your (first) baby? 😭
+
+
 <div align="center">
 
 ![JDB](assets/JDBWide.png)
